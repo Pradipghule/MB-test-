@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>मापनपुस्तिका (MB) — शेडनेटगृह</title>
+<style>
+  :root{--g:#1d5b2f;--g2:#2a7a41;--bg:#eef2ec;--line:#cfd8cb;--mut:#5b665e;--err:#a3321c;--warn:#fff4dc}
+  *{box-sizing:border-box}
+  html,body{margin:0;-webkit-text-size-adjust:100%}
+  body{font-family:"Nirmala UI","Noto Sans Devanagari","Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:#1a1a1a;font-size:15px}
+  header.top{background:var(--g);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;position:sticky;top:0;z-index:20}
+  .top-in{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+  .top h1{margin:0;font-size:18px;flex:1 1 220px}
+  .top small{display:block;font-weight:400;font-size:12px;color:#cfe3d5}
+  .btn{font:inherit;font-size:14px;border:1px solid #c4cec0;background:#fff;color:#1a1a1a;border-radius:9px;padding:9px 14px;cursor:pointer;min-height:42px}
+  .btn.pri{background:var(--g2);border-color:var(--g2);color:#fff;font-weight:600}
+  .top .btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff}
+  .btn:focus-visible{outline:3px solid #f2c14e;outline-offset:2px}
+  main{max-width:1000px;margin:0 auto;padding:12px 12px 60px}
+  .card{background:#fff;border-radius:14px;padding:16px;margin-top:12px;box-shadow:0 2px 10px rgba(20,40,25,.06)}
+  .card h2{margin:0 0 10px;font-size:16px;color:var(--g)}
+  .drop{display:block;border:2px dashed #9fbfa8;border-radius:14px;padding:22px 14px;text-align:center;background:#f6faf6}
+  .drop b{font-size:17px;color:var(--g)}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .hint{font-size:13px;color:var(--mut);margin:8px 0 0}
+  .alert{border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+  .alert.ok{background:#e5f3e7;color:#1d5a2c}.alert.err{background:#fdecea;color:var(--err)}.alert.warn{background:var(--warn);color:#6b4b05}
+  textarea,select,.inp{font:inherit;font-size:15px;border:1px solid #c4cec0;border-radius:8px;padding:9px 10px;min-height:42px;width:100%;background:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  label.l{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
+  .list .it{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;border-bottom:1px solid var(--line);padding:10px 2px}
+  .list .it .m{flex:1 1 240px;min-width:0}.list .it small{display:block;color:var(--mut)}
+  [hidden]{display:none !important}
+  .rv{width:100%;border-collapse:collapse;font-size:14px}
+  .rv td,.rv th{border-bottom:1px solid var(--line);padding:6px;vertical-align:middle;text-align:left}
+  .rv th{font-size:12px;color:var(--mut);background:#f3f6f1}
+  .rv input{font:inherit;width:96px;border:1px solid #c4cec0;border-radius:6px;padding:6px;min-height:36px;text-align:right}
+  .rv tr.s2 td:first-child{border-left:4px solid #2a7a41}.rv tr.s1 td:first-child{border-left:4px solid #e0a100}.rv tr.s0 td:first-child{border-left:4px solid #c9cfc6}
+  .rv small{color:var(--mut);font-size:11px;display:block;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{display:inline-block;border-radius:20px;padding:2px 8px;font-size:12px;white-space:nowrap}
+  .tag.ok{background:#e5f3e7;color:#1d5a2c}.tag.ch{background:#fff4dc;color:#6b4b05}.tag.no{background:#eef0ec;color:#5b665e}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.thumbs img{width:150px;border:1px solid var(--line);border-radius:6px;cursor:zoom-in}
+  .wrapx{overflow-x:auto}
+  @media (max-width:560px){ .rv th:nth-child(3),.rv td:nth-child(3){display:none} }
+
+  /* ---------- MB पाने (A4) ---------- */
+  #doc{margin-top:12px}
+  .pg{background:#fff;width:210mm;max-width:100%;margin:0 auto 14px;padding:12mm 11mm;box-shadow:0 2px 12px rgba(0,0,0,.12);font-family:"Nirmala UI","Noto Sans Devanagari",Arial,sans-serif;font-size:12.5px;color:#111;overflow-x:auto}
+  .pg .no{text-align:right;font-size:11px;color:#666}
+  .pg h3{text-align:center;margin:0;font-size:17px}
+  .pg h4{text-align:center;margin:2px 0 10px;font-size:15px}
+  .pg h5{margin:12px 0 6px;font-size:13.5px}
+  .pg table{width:100%;border-collapse:collapse;min-width:640px}
+  .pg td,.pg th{border:1px solid #333;padding:4px 5px;vertical-align:middle}
+  .pg th{font-weight:600;font-size:11.5px;background:#f4f4f4;text-align:center}
+  .pg td.c{text-align:center}.pg td.k{width:23%;font-weight:600;font-size:12px}
+  .pg .sec td{text-align:center;font-weight:700;font-size:14px;background:#fafafa}
+  .pg .lines{line-height:1.9}
+  .f{font:inherit;border:0;border-bottom:1px dotted #777;background:transparent;padding:1px 3px;min-width:60px;color:#0b3d91;font-weight:600}
+  .f:focus{outline:2px solid #f2c14e;background:#fffbe8}
+  td .f{width:100%;border-bottom:0;text-align:center}
+  td.lines .f{width:auto;border-bottom:1px dotted #777;text-align:left}
+  textarea.f{display:block;width:100%;border:0;resize:none;text-align:center;font-size:11px;line-height:1.25;height:2.7em;padding:1px;overflow:hidden}
+  .pg col.sr{width:7%}.pg col.ba{width:30%}.pg col.un{width:9%}.pg col.sp{width:15%}.pg col.q{width:12%}
+  td .f.left{text-align:left}
+  .f.diff{background:#fff1d6}
+  .w40{width:40px}.w80{width:90px}.w140{width:150px}.w220{width:230px}
+  .sig td{height:16mm;vertical-align:bottom;text-align:center;font-size:12px}
+  .cert p{margin:4px 0;line-height:1.7}
+  .yn{display:inline-block;min-width:40px}
+  @page{size:A4 portrait;margin:0}
+  @media print{
+    body{background:#fff}
+    header.top,main>.card,.noprint{display:none !important}
+    main{padding:0;max-width:none}
+    #doc{margin:0}
+    .pg{box-shadow:none;margin:0;width:210mm;height:297mm;overflow:hidden;page-break-after:always}
+    .pg table{min-width:0}
+    .f{border-bottom:1px dotted #999;color:#000}
+    td .f{border:0}
+    .f.diff{background:none}
+    .f::placeholder{color:transparent}
+  }
+  @media (max-width:640px){ .pg{padding:8mm 4mm;font-size:12px} }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <h1>📐 मापनपुस्तिका (MB) — शेडनेटगृह<small>कृषि अधिकाऱ्यांसाठी · बिलावरील QR वरून आपोआप भरते</small></h1>
+  <button type="button" class="btn" id="bLoad">📥 नवीन बिल</button>
+  <button type="button" class="btn" id="bList">📋 जतन केलेले</button>
+  <button type="button" class="btn" id="bPrint" hidden>🖨 Print / PDF</button>
+</div></header>
+
+<main>
+  <!-- बिल आणा -->
+  <section class="card" id="cLoad">
+    <h2>१ · बिल upload करा</h2>
+    <label class="drop" for="file" id="drop">
+      <b>📷 बिलाचा फोटो / Scan / PDF निवडा</b><br><span class="hint">बिलाची 2-3 पाने असल्यास सर्व फोटो एकदम निवडा.</span><br>
+      <span class="hint">Tax Invoice च्या शेवटच्या पानावरील <b>"MB QR"</b> दिसेल असा फोटो किंवा scan. PDF असल्यास सर्व पाने तपासली जातात.</span>
+      <input type="file" id="file" accept="image/*,application/pdf" multiple hidden>
+    </label>
+    <div class="alert" id="st" hidden></div>
+    <p class="hint">फोनच्या Camera ने थेट QR scan केला तरी हे पान उघडून MB आपोआप भरते.</p>
+    <details style="margin-top:10px"><summary class="hint" style="cursor:pointer">QR नसलेले बिल / इतर पर्याय</summary>
+      <div class="row" style="margin-top:8px">
+        <input class="inp" id="paste" placeholder="QR मधील link / मजकूर इथे paste करा" style="flex:1 1 260px">
+        <button type="button" class="btn" id="bPaste">भरा</button>
+        <button type="button" class="btn" id="bBlank">✍ कोरे MB (हाताने भरा)</button>
+      </div>
+    </details>
+  </section>
+
+  <!-- OCR तपासणी -->
+  <section class="card" id="cOcr" hidden>
+    <h2>🔍 बिल वाचले (OCR) — तपासा व MB मध्ये भरा</h2>
+    <p class="hint" style="margin-top:0">या बिलावर QR नव्हता, म्हणून बिलातील अक्षरे वाचली. <span class="tag ok">✔ हिरवी पट्टी = खात्री</span> (Rate × Qty = Amount जुळले) · <span class="tag ch">⚠ पिवळी = तपासा</span> (अंदाज) · <span class="tag no">करडी = सापडले नाही</span> (हाताने भरा). खालील बिलाचे फोटो पाहून आकडे तपासा.</p>
+    <div class="grid" id="ocrHead"></div>
+    <div class="wrapx" style="margin-top:12px"><table class="rv"><thead><tr><th>MB मधील बाब <span style="font-weight:400">(खाली: बिलात वाचलेली ओळ)</span></th><th>परिमाण</th><th>स्थिती</th></tr></thead><tbody id="ocrRows"></tbody></table></div>
+    <div class="thumbs" id="ocrImgs"></div>
+    <div class="row" style="margin-top:12px">
+      <button type="button" class="btn pri" id="bOcrOk">✔ तपासले — MB मध्ये भरा</button>
+      <button type="button" class="btn" id="bOcrNo">रद्द</button>
+    </div>
+  </section>
+
+  <!-- अधिकारी -->
+  <section class="card" id="cOff">
+    <h2>अधिकाऱ्यांची नावे <span class="hint" style="font-weight:400">(एकदा भरा — प्रत्येक MB वर आपोआप येतील)</span></h2>
+    <div class="grid">
+      <label class="l">सहाय्यक कृषि अधिकारी <input class="inp" id="oSak"></label>
+      <label class="l">मंडळ कृषि अधिकारी <input class="inp" id="oMak"></label>
+      <label class="l">उपविभागीय कृषि अधिकारी <input class="inp" id="oUak"></label>
+    </div>
+  </section>
+
+  <!-- जतन केलेले -->
+  <section class="card" id="cList" hidden>
+    <h2>📋 जतन केलेले MB <span class="hint" style="font-weight:400">(फक्त या फोन / कॉम्प्युटरवर)</span></h2>
+    <input class="inp" id="q" placeholder="🔍 शेतकरी / गाव / Invoice No.">
+    <div class="list" id="list"></div>
+  </section>
+
+  <!-- MB संदर्भ -->
+  <section class="card noprint" id="cInfo" hidden>
+    <div class="alert ok" id="srcInfo"></div>
+    <p class="hint">निळ्या अक्षरातील सर्व माहिती बदलता येते. <b>"प्रत्यक्ष मोजमापाप्रमाणे"</b> रकान्यात बिलातील परिमाण आधीच भरले आहे — मोजमाप वेगळे आल्यास बदला (पिवळे दिसेल).</p>
+    <div class="row" style="margin-top:8px">
+      <button type="button" class="btn pri" id="bSave">💾 जतन करा</button>
+      <button type="button" class="btn pri" id="bPrint2">🖨 Print / PDF</button>
+    </div>
+  </section>
+
+  <div id="doc"></div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]; }); }
+function LS(k, v){ try{ if(v === undefined){ var x = localStorage.getItem(k); return x ? JSON.parse(x) : null; } localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return v === undefined ? null : false; } }
+function dmy(iso){ return /^\d{4}-\d{2}-\d{2}/.test(String(iso || "")) ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : (iso || ""); }
+
+/* ---------- QR मधील Item क्रम (Tax Invoice मधील MBK प्रमाणेच) ---------- */
+var MBK = ["gi","net","ins","apr","prof","spr","scr","clamp","nut","door","fnd","fab","fndl","inst","drip","imain","isub","byp","vent","iacc","flat","fog","fsub","fmain","facc","bed","pump","tank","cpan","sand","scrn","trel","htp","othermal","otdoor","owork","omulch","ofan"];
+var CO = { kas:"Kisan Agro Services and Traders", sghc:"Sahyadri Green House Construction" };
+
+/* ---------- प्रपत्र ९ क — तक्ता अ (ओळी) : key, बाब, युनिट, मार्गदर्शक तांत्रिक निकष ---------- */
+var R9A = [
+  ["gi", "GI Pipe (Type- I, 3.0mm thickness) As per amendment No.2 (IS: 1161 2014) OR GI Pipe (Type-II, 3.0mm thickness) As per amendment No.2 (IS: 1161 2014)", "KGS", "IS 1161:2014 Type-I"],
+  ["net", "Shade Net (Tapenet/ mononet / Insect / thermal net on roof)", "Sq. mtrs", "IS 16008:2016 Part-II"],
+  ["ins", "Insect Net (on sides)", "Sq. mtrs", "IS 15351:2015"],
+  ["apr", "Laminated woven film (apron)", "Sq. mtrs", "IS 100 kg/cm²"],
+  ["prof", "Aluminum Profiles", "Mtrs.", "190 gm"],
+  ["spr", "Locking spring", "Mtrs.", "2.3 mm"],
+  ["scr", "Self drilling tapping Screws", "Nos.", "20 mm"],
+  ["clamp", "Clamps & Accessories", "Sq.mtrs", "2.5 mm"],
+  ["nut", "High Tensile Nuts & Bolts", "Sq. mtrs", "8 mm"],
+  ["door", "UV stabilised FRP-Door", "Nos.", "1 mm / UV stabilize"],
+  ["fnd", "Foundation- civil material", "No.", "1:4:8"],
+  ["fab", "Fabrication", "Sq.mtrs", ""],
+  ["fndl", "Foundation", "No.", ""],
+  ["inst", "Installation", "Sq.mtrs", ""],
+  ["oth", "Other", "", ""]
+];
+/* प्रपत्र ९ इ — ६. कंट्रोल हेड, ठिबक, फॉगिंग */
+var RCH = [["bed","Concrete Bed - 6 Sq. mtrs.","SQM"],["pump","Pump","Nos"],["tank","Water Storage Tank (optional)","Ltr"],["cpan","Control Panel","Nos"],["sand","Sand Filter with back wash assembly","Nos"],["disc","Disc Filter","Nos"]];
+var RIR = [["drip","Inline Emitting pipe for drip irrigation OR Lateral pipes for Micro / Mini / Inverted Sprinkler","mtr"],["imain","Main Pipe","Nos"],["isub","Sub main","Nos"],["byp","By Pass Assembly","Nos"],["vent","Venturi Unit","Nos"],["iacc","Installation & Fitting accessories","Nos"]];
+var RFG = [["flat","Lateral pipes","mtr"],["fog","Fogger","Nos"],["fsub","Sub main Pipe","Nos"],["fmain","Main Pipe","Nos"],["facc","Installation & Fitting accessories","Nos"]];
+/* ७. ऑप्शनल साहित्य */
+var ROP = [["ofan","Air circulating Fans in Shadenet house only",""],["htp","HTP single piston pump — 1. Electric motor (min 3 hp) 2. Panel box 3. Pipe- 50 mtr Length 4. With spray gun","Nos"],["othermal","Change in Cladding material used - Thermal net instead of TAPENET",""],["otdoor","2 leaf door for tractor - Two nos of FRP doors each leaf of 2.0m x 1.0m",""],["trel","Trellising System for Vegetable","Sqm"],["owork","Additional Working Net / Sliding Net with Gi Wire (Tapenet) (30-50%) for Polyhouse / Shadenethouse",""],["omulch","Plastic Mulching",""],["otank","Water Storage Tank",""]];
+
+/* ---------- MB data ---------- */
+var M = null;
+function blankMB(){
+  var m = { id:"MB" + Date.now().toString(36), at:new Date().toISOString(), src:null,
+    ben:{ name:"", vil:"", tal:"", dist:"", gat:"", mobile:"", cat:"", lat:"", lng:"" },
+    bab:{ type:"", area:"", grid:"", l:"", w:"", h:"" }, scheme:"", pre:{ no:"", date:"", area:"" }, firstDate:"", preDate:"",
+    khadda:{ a:"0.30", b:"0.45", c:"0.75" }, r9a:{}, ch:{}, opt:{}, rep:"" };
+  R9A.forEach(function(r){ m.r9a[r[0]] = { u:r[2], g:r[3], s:r[3], bill:"", act:"" }; });
+  RCH.concat(RIR, RFG).forEach(function(r){ m.ch[r[0]] = { u:r[2], s:"", act:"" }; });
+  ROP.forEach(function(r){ m.opt[r[0]] = { u:r[2], guide:"", inv:"", yn:"" }; });
+  return m;
+}
+function fmtQ(n){ var x = Math.round(Number(n) * 100) / 100; return isFinite(x) && x ? String(x) : ""; }
+
+/* QR मजकूर → MB */
+function parseQR(text){
+  var t = String(text || "").trim(), i = t.search(/MB[12]\|/);
+  if(i < 0){ var h = t.indexOf("#"); if(h >= 0){ var d = decodeHash(t.slice(h + 1)); i = d.search(/MB[12]\|/); t = d; } }
+  else if(t.indexOf("#") >= 0 && t.indexOf("#") < i) t = decodeHash(t.slice(t.indexOf("#") + 1)), i = t.search(/MB[12]\|/);
+  if(i < 0) return null;
+  var p = t.slice(i).split("|");
+  if(p.length < 19) return null;
+  var ver = p[0], q = {};
+  if(ver === "MB2"){
+    var parts = String(p[18] || "").split(";"), pos = parts[0] ? parts[0].split(",") : [];
+    pos.forEach(function(v, k){ if(v !== "" && MBK[k]) q[MBK[k]] = Number(v); });
+    if(parts[1]) parts[1].split(",").forEach(function(x){ var a = x.split(":"); if(a[0]) q[a[0]] = Number(a[1]); });
+  } else String(p[18] || "").split(",").forEach(function(x){ var a = x.split(":"); if(a[0]) q[a[0]] = Number(a[1]); });
+  var amt = {}, ap = String(p[19] || "").split(",");
+  if(ver === "MB2") ["s","c","d","e","f"].forEach(function(k, n){ if(ap[n]) amt[k] = Number(ap[n]); });
+  else ap.forEach(function(x){ var a = x.split(":"); if(a[0]) amt[a[0]] = Number(a[1]); });
+  return { co:p[1], no:p[2], date:p[3], name:p[4], vil:p[5], tal:p[6], dist:p[7], gat:p[8], mobile:p[9], scheme:p[10], model:p[11], tpl:p[12],
+    w:p[13], l:p[14], h:p[15], area:p[16], pre:p[17], q:q, amt:amt };
+}
+function decodeHash(h){ try{ return decodeURIComponent(String(h).replace(/\+/g, " ")); }catch(e){ return String(h); } }
+function fromQR(d){
+  var m = blankMB(), q = d.q;
+  m.src = { co:d.co, coName:CO[d.co] || d.co || "", no:d.no, date:d.date, amt:d.amt, tpl:d.tpl, ocr:!!d.ocr };
+  m.ben = { name:d.name, vil:d.vil, tal:d.tal, dist:d.dist, gat:d.gat, mobile:d.mobile, cat:"", lat:"", lng:"" };
+  m.bab = { type:d.model, area:d.area, grid:"", l:d.l, w:d.w, h:d.h };
+  m.scheme = d.scheme; m.pre = { no:d.pre, date:"", area:d.area };
+  R9A.forEach(function(r){ var v = q[r[0]]; if(v){ m.r9a[r[0]].bill = fmtQ(v); m.r9a[r[0]].act = fmtQ(v); } });
+  var chq = { bed:q.bed ? (q.bed >= 6 ? q.bed : q.bed * 6) : 0, disc:q.disc || q.scrn };
+  RCH.concat(RIR, RFG).forEach(function(r){ var v = chq[r[0]] != null ? chq[r[0]] : q[r[0]]; if(v){ m.ch[r[0]].s = fmtQ(v); m.ch[r[0]].act = fmtQ(v); } });
+  ROP.forEach(function(r){ var v = q[r[0]]; if(v){ m.opt[r[0]].inv = fmtQ(v); m.opt[r[0]].yn = "Yes"; } else { m.opt[r[0]].u = m.opt[r[0]].u ? m.opt[r[0]].u : "—"; } });
+  return m;
+}
+
+/* ---------- पाने बनवा ---------- */
+function F(path, cls, ph){ var v = get(path); return '<input class="f ' + (cls || "") + '" data-f="' + path + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + ">"; }
+function T(path){ return '<textarea class="f" rows="2" data-f="' + path + '">' + esc(get(path)) + "</textarea>"; }
+function get(path){ return path.split(".").reduce(function(o, k){ return o == null ? "" : o[k]; }, M); }
+function set(path, v){ var a = path.split("."), o = M; for(var i = 0; i < a.length - 1; i++){ o = o[a[i]] = o[a[i]] || {}; } o[a[a.length - 1]] = v; }
+function benHead(){
+  return '<tr><td class="k">लाभार्थ्याचे तपशील</td><td class="lines">नाव : श्री./श्रीमती ' + F("ben.name", "w220") +
+    '<br>गाव : ' + F("ben.vil", "w140") + ' &nbsp; तालुका ' + F("ben.tal", "w140") + ' &nbsp; जिल्हा ' + F("ben.dist", "w140") +
+    '<br>गट / सर्वे नं. ' + F("ben.gat", "w80") + ' &nbsp; मो. नं. ' + F("ben.mobile", "w140") +
+    '<br>वर्गवारी (अ.जा./ अ.ज./ सर्वसाधारण.) ' + F("ben.cat", "w140") + "</td></tr>";
+}
+function sigBlock(){
+  return '<p style="margin:14px 0 4px">समक्ष लाभार्थी / शेतकरी प्रतिनिधी नाव :– <span class="f" style="display:inline-block;min-width:240px">' + esc(M.ben.name ? "श्री. " + M.ben.name : "") + "</span><br>सही : ......................................</p>" +
+    '<table class="sig" style="margin-top:6px"><tr><th>मोजमाप घेतले</th><th>तांत्रिक निकष व मोजमाप पडताळणी केली</th><th>तांत्रिक निकष व मोजमाप पडताळणी प्रमाणित केली व अनुदान परिगणन करुन शिफारस केली</th></tr>' +
+    "<tr><td>सहाय्यक कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.sak || off().sak) + "<br><br>दिनांकित स्वाक्षरी ..............</td><td>मंडळ कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.mak || off().mak) + "<br><br>दिनांकित स्वाक्षरी ..............</td><td>उपविभागीय कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.uak || off().uak) + "<br><br>दिनांकित स्वाक्षरी ..............</td></tr></table>";
+}
+function off(){ return LS("mb_off") || { sak:"", mak:"", uak:"" }; }
+function rowsA(from, to){
+  return R9A.slice(from, to).map(function(r, i){
+    var k = r[0], d = M.r9a[k], diff = d.bill !== "" && d.act !== d.bill;
+    return "<tr><td class=c>" + (from + i + 1) + "</td><td>" + (k === "fnd" ? "<b>" + esc(r[1]) + "</b>" : esc(r[1])) + "</td><td class=c>" + F("r9a." + k + ".u") + "</td><td>" + T("r9a." + k + ".g") + "</td><td>" + T("r9a." + k + ".s") +
+      "</td><td>" + F("r9a." + k + ".bill") + '</td><td><input class="f' + (diff ? " diff" : "") + '" data-f="r9a.' + k + '.act" value="' + esc(d.act) + '"></td></tr>';
+  }).join("");
+}
+var THA = '<colgroup><col class="sr"><col class="ba"><col class="un"><col class="sp"><col class="sp"><col class="q"><col class="q"></colgroup><tr><th>अ.क्र.</th><th>बाब</th><th>युनिट</th><th>मार्गदर्शक सूचनेप्रमाणे तांत्रिक निकष</th><th>पुरवठा झालेल्या साहित्याचे तांत्रिक निकष</th><th>पुरवठा झालेल्या साहित्याचे परिमाण देयकानुसार</th><th>पुरवठा झालेल्या साहित्याचे परिमाण प्रत्यक्ष मोजमापाप्रमाणे</th></tr>';
+function chTable(title, rows){
+  return '<table style="margin-top:8px"><tr><th class="w40">अ. क्र.</th><th>बाब</th><th class="w80">युनिट</th><th>वापरण्यात आलेल्या साहित्याचे तांत्रिक निकष</th><th>पुरवठा झालेल्या साहित्याचे परिमाण प्रत्यक्ष मोजमापाप्रमाणे</th></tr>' +
+    '<tr class="sec"><td colspan="5">' + title + "</td></tr>" +
+    rows.map(function(r, i){ var k = r[0], d = M.ch[k], diff = d.s !== "" && d.act !== d.s;
+      return "<tr><td class=c>" + (i + 1) + ".</td><td>" + esc(r[1]) + "</td><td class=c>" + F("ch." + k + ".u") + "</td><td>" + F("ch." + k + ".s") + '</td><td><input class="f' + (diff ? " diff" : "") + '" data-f="ch.' + k + '.act" value="' + esc(d.act) + '"></td></tr>'; }).join("") + "</table>";
+}
+function render(){
+  if(!M){ $("doc").innerHTML = ""; $("cInfo").hidden = true; $("bPrint").hidden = true; return; }
+  var s = M.src;
+  $("cInfo").hidden = false; $("bPrint").hidden = false;
+  $("srcInfo").innerHTML = s && s.ocr ? "🔍 बिल वाचून (OCR) भरले व तपासले — " + (s.coName ? "<b>" + esc(s.coName) + "</b> · " : "") + (s.no ? "Invoice <b>" + esc(s.no) + "</b> · " + dmy(s.date) : "") : s ? "✔ बिलातील QR वरून भरले — <b>" + esc(s.coName) + "</b> · Invoice <b>" + esc(s.no) + "</b> · " + dmy(s.date) : "✍ कोरे MB — सर्व माहिती हाताने भरा.";
+  var P1 = '<div class="pg"><div class="no">पान १</div><h3>प्रपत्र – ९ क</h3><h4>शेडनेटगृह मापनपुस्तिका नोंद (साहित्य पुरवठा झाल्यानंतर)</h4><table>' + benHead() +
+    '<tr><td class="k">अक्षांश व रेखांश तपशील</td><td>अक्षांश ' + F("ben.lat", "w140") + " &nbsp; रेखांश " + F("ben.lng", "w140") + "</td></tr>" +
+    '<tr><td class="k">बाब – शेडनेटगृह</td><td class="lines">प्रकार ' + F("bab.type", "w140") + " &nbsp; आकारमान " + F("bab.area", "w80") + "<br>ग्रीड " + F("bab.grid", "w80", "उदा. 6 x 4") + "</td></tr>" +
+    '<tr><td class="k">योजनेचे नाव</td><td>' + F("scheme", "w220") + "</td></tr>" +
+    '<tr><td class="k">पूर्वसंमती क्र. व दिनांक</td><td>' + F("pre.no", "w220") + " &nbsp; दिनांक " + F("pre.date", "w140") + "</td></tr>" +
+    '<tr><td class="k">पूर्वसंमती दिलेले क्षेत्र</td><td>' + F("pre.area", "w80") + " चौ.मी.</td></tr>" +
+    '<tr><td class="k">प्रथम मोका तपासणी दिनांक</td><td>' + F("firstDate", "w140") + "</td></tr></table>" +
+    "<h5>अ. पुरवठा केलेले सर्व साहित्य मार्गदर्शक सूचनेतील तांत्रिक निकषांप्रमाणे असलेबाबत तपशील</h5><table>" + THA + rowsA(0, 8) + "</table></div>";
+  var P2 = '<div class="pg"><div class="no">पान २</div><table>' + THA + rowsA(8, 15) + "</table>" +
+    '<div class="cert"><h4 style="margin-top:16px">प्रमाणपत्र</h4>' +
+    "<p>१) जीआय पाईप (कॉलम पाईप) च्या उभारणीकरिता पक्का पाया (खड्डा) " + F("khadda.a", "w40") + " मी X " + F("khadda.b", "w40") + " मी X " + F("khadda.c", "w40") + " मी. या आकाराचा <b>(जमिनीलगतचा व्यास X तळाचा व्यास X खोली)</b> खड्डा घेतलेला असून त्यात मधोमध फाउंडेशन पाईप बसवुन त्यास होल्डफास्य बार टाकून <b>१:४:८ प्रमाणात सिमेंट, वाळू, खडी</b> घेऊन तयार केलेले सिमेंट कॉंक्रीट भरण्यात आलेले आहे.</p>" +
+    "<p>२) प्रमाणित करण्यात येते की सदरील लाभार्थ्यास शेटनेटगृह या घटकाचा लाभ यापुर्वी देण्यात आलेला नाही.</p>" +
+    "<p>३) वरीलप्रमाणे सर्व साहित्याचे तांत्रिक निकम व परिमाण याची पडताळणी करुन त्याच्या नोंदी मापनपुस्तिकेत नोंदविलेल्या आहेत.</p></div>" + sigBlock() + "</div>";
+  var P3 = '<div class="pg"><div class="no">पान ३</div><h3>प्रपत्र – ९ इ</h3><h4>मापनपुस्तिका नोंद – शेटनेटसह (अंतिम मोका तपासणीनंतर)</h4><div class="lines">' +
+    "१. लाभार्थ्याचे नाव :- श्री./श्रीमती " + F("ben.name", "w220") + "<br>&nbsp;&nbsp;&nbsp; गाव " + F("ben.vil", "w140") + " ता. " + F("ben.tal", "w140") + " जि. " + F("ben.dist", "w140") +
+    "<br>&nbsp;&nbsp;&nbsp; सर्वे नं. " + F("ben.gat", "w80") + " वर्गवारी (अ.जा./अ/ज./सर्वसाधारण) " + F("ben.cat", "w140") + " मो.नं. " + F("ben.mobile", "w140") +
+    "<br>&nbsp;&nbsp;&nbsp; अंक्षांश : " + F("ben.lat", "w140") + " रेखांश : " + F("ben.lng", "w140") +
+    "<br>२. बाब – शेटनेटगृह (मार्गदर्शक सूचनेप्रमाणे आकारमान नमूद करावे) " + F("bab.area", "w80") +
+    "<br>३. उभारणीपूर्व प्रथम तपासणीचा दिनांक :- " + F("preDate", "w140") +
+    "<br>४. पूर्वसंमती दिलेले क्षेत्र " + F("pre.area", "w80") + " चौ.मी." +
+    "<br>५. पकल्पाचा मोका तपासणी तपशील – उभारणी केलेल्या शेटनेटगृहाचे आकारमान" +
+    "<br>&nbsp;&nbsp;&nbsp; ५.१ लांबी " + F("bab.l", "w80") + " मी. रुंदी " + F("bab.w", "w80") + " मी. उंची " + F("bab.h", "w80") + " मी." +
+    "<br>&nbsp;&nbsp;&nbsp; ५.२ क्षेत्रफळ " + F("bab.area", "w80") + " चौ.मी. (अ)" +
+    "<br>&nbsp;&nbsp;&nbsp; ५.३ ग्रीड " + F("bab.grid", "w80") + " मी.</div>" +
+    "<h5>६. कंट्रोल हेड, ठिबक सिंचन व फॉगिंग यंत्रणा यांचे विविध घटकांचे तांत्रिक निकष, परिमाण :–</h5>" + chTable("Control Head (Optional)", RCH) + "</div>";
+  var P4 = '<div class="pg"><div class="no">पान ४</div>' + chTable("Irrigation System", RIR) + chTable("Fogging System", RFG) + "</div>";
+  var P5 = '<div class="pg"><div class="no">पान ५</div><h5>७. ऑप्शनल साहित्याचा विविध घटकांचे तांत्रिक निकष, परिमाण :–</h5><table><tr><th class="w40">Sr.No.</th><th>List of Items & their Specification</th><th class="w80">Unit</th><th class="w80">Quantity as per Guideline</th><th class="w80">Quantity as per Invoice Produced</th><th class="w80">Material as per Technical Specification Yes / No</th></tr>' +
+    ROP.map(function(r, i){ var k = r[0]; return "<tr><td class=c>" + (i + 1) + "</td><td>" + esc(r[1]) + "</td><td class=c>" + F("opt." + k + ".u") + "</td><td>" + F("opt." + k + ".guide") + "</td><td>" + F("opt." + k + ".inv") + "</td><td>" + F("opt." + k + ".yn") + "</td></tr>"; }).join("") + "</table>" +
+    '<div class="cert"><h4 style="margin-top:16px">प्रमाणपत्र</h4><p>१) प्रमाणित करण्यात येते की सदरील लाभार्थ्यास शेडनेटगृह या घटकाचा लाभ यापुर्वी देण्यात आलेला नाही.</p>' +
+    "<p>२) उभारणी केलेल्या शेडनेटगृहासाठी वापरलेले जीआय पाईप, क्लॅडिंग मटेरियल इ. साहित्याचे तांत्रिक निकष व परिमाण हे मार्गदर्शक सूचनेतील विहित निकष परिमाणाची पुर्तता करतात याची खात्री केली आहे.</p>" +
+    "<p>३) वरीलप्रमाणे सर्व साहित्याचे तांत्रिक निकष व परिमाण याची पडताळणी करुन त्याच्या नोंदी मापनपुस्तिकेत नोंदविलेल्या आहेत.</p></div>" + sigBlock() + "</div>";
+  $("doc").innerHTML = P1 + P2 + P3 + P4 + P5;
+}
+/* बदल → data (एकाच नावाचे सर्व रकाने एकत्र बदलतात, उदा. नाव पान १ व ३) */
+$("doc").addEventListener("input", function(e){
+  var f = e.target.getAttribute("data-f"); if(!f) return;
+  set(f, e.target.value);
+  document.querySelectorAll('[data-f="' + f + '"]').forEach(function(x){ if(x !== e.target) x.value = e.target.value; });
+  var m = /^(r9a|ch)\.([a-z]+)\.act$/.exec(f);
+  if(m){ var base = m[1] === "r9a" ? M.r9a[m[2]].bill : M.ch[m[2]].s; e.target.classList.toggle("diff", base !== "" && e.target.value !== base); }
+  draft();
+});
+var DT = null; function draft(){ clearTimeout(DT); DT = setTimeout(function(){ LS("mb_draft", M); }, 600); }
+
+/* ---------- QR शोधणे (फोटो / scan / PDF) ---------- */
+function status(t, cls){ var e = $("st"); e.hidden = !t; e.className = "alert " + (cls || ""); e.innerHTML = t || ""; }
+function loadJs(urls){
+  return urls.reduce(function(p, u){ return p.catch(function(){ return new Promise(function(res, rej){ var s = document.createElement("script"); s.src = u; s.onload = res; s.onerror = function(){ s.remove(); rej(new Error(u)); }; document.head.appendChild(s); }); }); }, Promise.reject());
+}
+var JSQR = ["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js", "https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"];
+var PDFJS = ["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"];
+var PDFW = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+function fileCanvas(file){
+  return new Promise(function(res, rej){
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){ var W = img.naturalWidth, H = img.naturalHeight, s = Math.min(1, 3200 / Math.max(W, H)), c = document.createElement("canvas");
+      c.width = Math.round(W * s); c.height = Math.round(H * s); var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res([c]); };
+    img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error("हा फोटो उघडला नाही")); };
+    img.src = url;
+  });
+}
+function pdfCanvases(file){
+  return loadJs(PDFJS).then(function(){ var L = window.pdfjsLib; L.GlobalWorkerOptions.workerSrc = PDFW; return file.arrayBuffer().then(function(b){ return L.getDocument({ data:b }).promise; }); })
+    .then(function(pdf){
+      var out = [], n = pdf.numPages, chain = Promise.resolve();
+      for(var i = n; i >= 1; i--) (function(i){ chain = chain.then(function(){ return pdf.getPage(i).then(function(pg){   /* शेवटचे पान आधी — QR तिथे असतो */
+        var v0 = pg.getViewport({ scale:1 }), sc = 2600 / Math.max(v0.width, v0.height), vp = pg.getViewport({ scale:sc }), c = document.createElement("canvas");
+        c.width = Math.round(vp.width); c.height = Math.round(vp.height); var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+        return pg.render({ canvasContext:x, viewport:vp }).promise.then(function(){ out.push(c); }); }); }); })(i);
+      return chain.then(function(){ return out; });
+    });
+}
+/* संपूर्ण पान, मग भाग (खालचा अर्धा, कोपरे) — लहान भाग 2x मोठा करून */
+function regions(c){
+  var W = c.width, H = c.height, R = [[0,0,1,1],[0,.45,1,1],[0,.5,.65,1],[.3,.5,1,1],[0,0,1,.55],[.2,.55,.75,.95]];
+  return R.map(function(r){ var x = Math.round(r[0] * W), y = Math.round(r[1] * H), w = Math.round((r[2] - r[0]) * W), h = Math.round((r[3] - r[1]) * H),
+    s = Math.min(2, 2400 / Math.max(w, h)), o = document.createElement("canvas"); o.width = Math.round(w * s); o.height = Math.round(h * s);
+    var g = o.getContext("2d"); g.imageSmoothingEnabled = true; g.drawImage(c, x, y, w, h, 0, 0, o.width, o.height); return o; });
+}
+function detect(c){
+  if("BarcodeDetector" in window){
+    try{ var bd = new window.BarcodeDetector({ formats:["qr_code"] });
+      return bd.detect(c).then(function(r){ var t = r && r[0] && r[0].rawValue; return t || jsqr(c); }, function(){ return jsqr(c); }); }catch(e){}
+  }
+  return jsqr(c);
+}
+function jsqr(c){
+  return (window.jsQR ? Promise.resolve() : loadJs(JSQR)).then(function(){
+    var d = c.getContext("2d").getImageData(0, 0, c.width, c.height), r = window.jsQR(d.data, c.width, c.height, { inversionAttempts:"attemptBoth" });
+    return r && r.data || null;
+  });
+}
+function findQR(canvases){
+  var list = []; canvases.forEach(function(c){ list = list.concat(regions(c)); });
+  return list.reduce(function(p, c){ return p.then(function(t){ if(t && /MB[12]\|/.test(decodeHash(t) + t)) return t; return detect(c).catch(function(){ return null; }); }); }, Promise.resolve(null))
+    .then(function(t){ return t && /MB[12]\|/.test(decodeHash(t) + t) ? t : null; });
+}
+$("file").onchange = function(e){
+  var files = [].slice.call(e.target.files || []); e.target.value = ""; if(!files.length) return;
+  status("⏳ बिलातील QR शोधत आहे… (" + files.length + " फाईल)");
+  /* सर्व फाईली → पाने (PDF ची पाने शेवटून, फोटो निवडलेल्या क्रमाने उलट — runOCR परत सरळ करते) */
+  files.reduce(function(pr, f){ return pr.then(function(all){ var isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+      return (isPdf ? pdfCanvases(f) : fileCanvas(f)).then(function(c){ return c.concat(all); }); }); }, Promise.resolve([]))
+  .then(function(c){ LASTC = c; return findQR(c); }).then(function(t){
+    if(!t){ runOCR(LASTC); return; }
+    openQR(t, "upload");
+  }).catch(function(err){
+    status("❌ फाईल वाचता आली नाही — " + esc(err && err.message || err) + (navigator.onLine ? "" : "<br>पहिल्यांदा QR वाचण्यासाठी Internet लागते."), "err");
+  });
+};
+function openQR(t, how){
+  var d = parseQR(t); if(!d){ status("❌ हा QR MB चा नाही किंवा अपूर्ण आहे.", "err"); return false; }
+  var L = LS("mb_list") || [], ex = L.filter(function(x){ return x.src && x.src.no === d.no && x.src.co === d.co; })[0];
+  if(ex && confirm("Invoice " + d.no + " (" + d.name + ") चे MB आधीच जतन आहे.\n\nOK = तेच उघडा (तुमचे बदल सोबत)\nCancel = बिलावरून नवीन भरा")){ M = ex; }
+  else M = fromQR(d);
+  render(); status("✔ QR वाचला — " + esc(d.name) + " · " + esc(d.vil) + " · Invoice " + esc(d.no) + ". खाली MB भरले आहे.", "ok");
+  setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
+  return true;
+}
+$("bPaste").onclick = function(){ if(!openQR($("paste").value, "paste")) return; $("paste").value = ""; };
+$("bBlank").onclick = function(){ M = blankMB(); render(); status("✍ कोरे MB उघडले.", "ok"); };
+
+/* ---------- 🔍 QR नसल्यास: OCR (बिलातील अक्षरे वाचणे) → अधिकाऱ्याने तपासून MB ---------- */
+var LASTC = [], OCRR = null;
+/* OCR मजकूर → MB माहिती (बिलातील Items व शेतकरी तपशील). Rate × Qty = Amount जुळल्यास Qty खात्रीची. */
+var OCRP = (function(){
+  var RULES = [
+    ["fnd", /foundation\s*[-–:]?\s*civil|civil\s*mat/i],
+    ["htp", /\bhtp\b|piston/i],
+    ["gi", /\bg\.?\s*i\.?\s*pipe|\bgi\s*pipe|^\W*\d*\W*g\.\s*pipe|galvani[sz]ed/i],
+    ["ins", /insect\s*net/i],
+    ["net", /shade\s*net|mono\s*net|tape\s*net/i],
+    ["apr", /apron|laminated|woven\s*film/i],
+    ["prof", /alumin\w*\s*profile|\bprofiles?\b/i],
+    ["spr", /locking\s*spring|\bsprings?\b/i],
+    ["scr", /self\s*drill|tapping\s*screw/i],
+    ["acc", /fitting\s*accessor/i],
+    ["clamp", /clamps?\b/i],
+    ["nut", /nut\s*&?\s*bolt|tensile/i],
+    ["door", /\bfrp\b|\bdoor\b/i],
+    ["fab", /fabrication/i],
+    ["inst", /installation(?!\s*&|\s*and)/i],
+    ["fndl", /foundation/i],
+    ["drip", /inline|emitting|drip\s*(irrigation|line|pipe)/i],
+    ["fog", /fogger/i],
+    ["lat", /lateral/i],
+    ["sub", /sub\s*-?\s*main/i],
+    ["main", /main\s*pipe/i],
+    ["byp", /by\s*-?\s*pass/i],
+    ["vent", /venturi/i],
+    ["bed", /concrete\s*bed/i],
+    ["pump", /\bpump\b/i],
+    ["tank", /water\s*(storage\s*)?tank|storage\s*tank/i],
+    ["cpan", /control\s*panel|panel\s*box/i],
+    ["sand", /sand\s*filter/i],
+    ["scrn", /screen\s*filter|disc\s*filter/i],
+    ["trel", /trellis/i]
+  ];
+  var SKIP = /transport|total|cgst|sgst|igst|grand|round\s*off|amount\s*in\s*words|taxable|polyhouse|farm\s*pond|farmer\s*name|address\s*:|model\s*:|type\s*:|scheme\s*name/i;
+  var UNIT = /\b(KGS?|SQ\.?\s*MTRS?|S[QOAE]MT|SQM|MTRS?\.?|RMT|NOS\.?|LTRS?|TTR|SETS?)\b/i;
+  function nums(line){
+    var out = [], re = /\d[\d,]*(?:\.\d+)?/g, m;
+    var cleaned = line.replace(/^\W*\d{1,2}\s*[|.)\]]?\s+(?=[A-Za-z])/, " ")      /* सुरुवातीचा अ.क्र. */
+      .replace(/\b[I1l]S\s*[:(]?\s*\d{3,5}(?:\s*[:\-]\s*\d{4})?\)?/gi, " ")             /* IS 1161:2014, 1S 4985 */
+      .replace(/\b[A-Za-z]+\s*-\s*\d+(?:\.\d+)?(?=\s|$)/g, " ").replace(/\d+(?:\.\d+)?\s*%/g, " ").replace(/\d+\s*m3\/hr/gi, " ").replace(/\d+(?:\.\d+)?\s*(?:hp|mm)\b/gi, " ");
+    while((m = re.exec(cleaned))){ var t = m[0], raw = t.replace(/,/g, "");
+      if(/^\d{6,}$/.test(t)) continue;                 /* HSN / CML / BIS नंबर */
+      var v = parseFloat(raw); if(!isFinite(v)) continue; out.push(v); }
+    return out;
+  }
+  function qtyOf(line){
+    var n = nums(line);
+    /* आधार: Amount + GST रक्कम = Total (GST 5/12/18/28%) → Amount च्या आधीचा आकडा Qty (किंवा Rate = Amount असल्यास Qty 1) */
+    for(var a0 = n.length - 3; a0 >= 1; a0--){
+      var A = n[a0], G = n[a0 + 1], T = n[a0 + 2];
+      if(!(A > 0 && G > 0 && T > 0) || Math.abs(A + G - T) > Math.max(1.5, T * 0.002)) continue;
+      var pr = G / A; if(![0.05, 0.12, 0.18, 0.28].some(function(x){ return Math.abs(pr - x) < 0.004; })) continue;
+      var b = n[a0 - 1], c = a0 >= 2 ? n[a0 - 2] : null;
+      if(c != null && Math.abs(c * b - A) <= Math.max(1.5, A * 0.003)) return { q:b, conf:2 };
+      if(Math.abs(b - A) < 0.011) return { q:1, conf:2 };
+      if(c != null && Math.abs(b * c - A) <= Math.max(1.5, A * 0.003)) return { q:c, conf:2 };
+      if(b > 0 && b < A){ var d = A / b;   /* एकच आकडा: तो Rate की Qty? Amount ÷ आकडा पूर्णांक आल्यास लहान = Qty */
+        if(Math.abs(d - Math.round(d)) < 0.003 && Math.round(d) >= 1) return { q:Math.min(Math.round(d), Math.abs(b - Math.round(b)) < 1e-9 ? b : Infinity), conf:1 };
+        if(Math.abs(b - Math.round(b)) < 1e-9) return { q:b, conf:1 }; }
+    }
+    for(var i = 0; i < n.length; i++) for(var j = i + 1; j < n.length; j++) for(var k = j + 1; k < Math.min(n.length, j + 3); k++){
+      var r = n[i], q = n[j], a = n[k];
+      if(r > 0 && q > 0 && a > 0 && Math.abs(r * q - a) <= Math.max(1.5, a * 0.003)) return { q:q, conf:2 };
+    }
+    /* Qty गाळली असेल: Rate व Amount वरून */
+    for(i = 0; i < n.length; i++) for(j = i + 1; j < Math.min(n.length, i + 3); j++){
+      var qq = n[j] / n[i]; if(n[i] > 0 && qq >= 1 && Math.abs(qq - Math.round(qq)) < 0.003 && n[j] >= n[i]) return { q:Math.round(qq), conf:1, derived:true };
+    }
+    var u = UNIT.exec(line); if(u){ var after = nums(line.slice(u.index + u[0].length)); if(after.length && after[0] === Math.round(after[0])) return { q:after[0], conf:1 }; }
+    return null;
+  }
+  function header(text){
+    var t = text.replace(/[|]/g, " "), h = {}, m;
+    if(/kisan\s*agro/i.test(t)) h.co = "kas"; else if(/sahyadri/i.test(t)) h.co = "sghc";
+    if((m = /Farmer\s*Name\s*[:;]?\s*(.+?)(?=\s{2,}|\s+Model\b|\n|$)/i.exec(t))) h.name = m[1].trim();
+    if((m = /At\s*\/?\s*Post\s*[-:]?\s*([^,\n]+),\s*Tal[\s.\-:]*([^,\n]+),\s*Dist[\s.\-:]*([^.\n,]+)/i.exec(t))){ h.vil = m[1].trim(); h.tal = m[2].trim(); h.dist = m[3].replace(/\s+Type.*$/i, "").trim(); }
+    if((m = /Mobile\s*No\s*[:;]?\s*(\d{10})/i.exec(t))) h.mobile = m[1];
+    if((m = /Survey\s*No\s*\/?\s*Gat\s*No\s*[:;]?\s*([0-9A-Za-z\/\-]+)/i.exec(t))) h.gat = m[1];
+    if((m = /Presanction\s*No\s*[:;]?\s*([0-9]{4}\s*-\s*[0-9]{2}\s*\/\s*[0-9]+)/i.exec(t))) h.pre = m[1].replace(/\s/g, "");
+    if((m = /Model\s*[:;]?[^\n(]*\(\s*([A-Z]{3,6})\s*\)/.exec(t))) h.model = m[1];
+    if((m = /(\d{2,3})\s*[xX×]\s*(\d{2,3})\s*=\s*([\d,]{3,})/.exec(t))){ h.w = m[1]; h.l = m[2]; h.area = m[3].replace(/,/g, ""); }
+    if((m = /Height\s*\S{0,3}\s*([\d.]+)\s*Mtr/i.exec(t))) h.h = m[1];
+    if((m = /Scheme\s*Name\s*[:;]?\s*([A-Z]{3,10})/.exec(t))) h.scheme = m[1];
+    if((m = /Tax\s*Invoice\s*No\s*[:;]?\s*([A-Z]{2,6}?)\s*[\/I1l|]?\s*(\d{2}\s*-\s*\d{2})\s*[\/I1l|]\s*(\d{1,4})/i.exec(t))) h.no = m[1].toUpperCase().replace(/^(KAST|SGHC)[I1L|]$/, "$1") + "/" + m[2].replace(/\s/g, "") + "/" + m[3];
+    if((m = /Invoice\s*Date\s*[:;]?\s*(\d{1,2})[-\/ ]([A-Za-z]{3}|\d{1,2})[-\/ ](\d{4})/i.exec(t))){
+      var MO = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 }, mo = isNaN(+m[2]) ? MO[m[2].toLowerCase()] : +m[2];
+      if(mo) h.date = m[3] + "-" + String(mo).padStart(2, "0") + "-" + String(m[1]).padStart(2, "0"); }
+    return h;
+  }
+  function parse(text){
+    var lines = String(text).split(/\n/), sec = "", seen = {}, items = {}, raw = {};
+    lines.forEach(function(L){
+      var u = L.toUpperCase();
+      if(/IRRIGATION\s*SYSTEM/.test(u)) sec = "C"; else if(/FOGGING/.test(u)) sec = "D"; else if(/CONTROL\s*HEAD/.test(u)) sec = "E";
+      else if(/OPTIONAL/.test(u)) sec = "F"; else if(/MATERIAL\s*COST/.test(u)) sec = "A"; else if(/LABOU?R/.test(u)) sec = "B";
+      if(SKIP.test(L)) return;
+      var key = null; for(var i = 0; i < RULES.length; i++){ if(RULES[i][1].test(L)){ key = RULES[i][0]; break; } }
+      if(!key) return;
+      /* भागानुसार (C ठिबक / D फॉगिंग) — भाग न कळल्यास पहिला = ठिबक, दुसरा = फॉगिंग */
+      var n = (seen[key] = (seen[key] || 0) + 1), irr = sec ? sec === "C" : n === 1;
+      if(key === "main") key = irr ? "imain" : "fmain";
+      else if(key === "sub") key = irr ? "isub" : "fsub";
+      else if(key === "acc") key = irr ? "iacc" : "facc";
+      else if(key === "lat") key = (sec === "C") ? "drip" : "flat";
+      else if(key === "inst" && sec && sec !== "B" && sec !== "A") return;
+      else if(key === "fndl" && sec === "A") key = "fnd";
+      if(items[key] && items[key].q != null) return;
+      if(!/\d/.test(L)) return;
+      var q = qtyOf(L);
+      if(items[key] && !q) return;
+      items[key] = q ? q : { q:null, conf:0 }; raw[key] = L.trim().slice(0, 140);
+    });
+    return { head:header(text), items:items, raw:raw };
+  }
+  /* अनेक OCR पद्धतींचे निकाल एकत्र: प्रत्येक ओळीसाठी सर्वात खात्रीची Qty */
+  function merge(texts){
+    var R0 = null;
+    texts.forEach(function(t){ var r = parse(t);
+      if(!R0){ R0 = r; return; }
+      Object.keys(r.head).forEach(function(k){ if(!R0.head[k]) R0.head[k] = r.head[k]; });
+      Object.keys(r.items).forEach(function(k){ var a = R0.items[k], b = r.items[k];
+        if(!a || (b.q != null && (a.q == null || b.conf > a.conf))){ R0.items[k] = b; R0.raw[k] = r.raw[k]; }
+        else if(a && b.q != null && a.q != null && a.q !== b.q && a.conf === b.conf && a.conf < 2) a.conflict = b.q; });
+    });
+    return R0;
+  }
+  return { parse:parse, merge:merge, qtyOf:qtyOf, header:header };
+})();
+
+
+var TESS = ["https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", "https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js"];
+var LBL = {}; R9A.concat(RCH, RIR, RFG, ROP).forEach(function(r){ LBL[r[0]] = r[1].split(" — ")[0].split(" As per")[0].split(" OR ")[0]; });
+LBL.gi = "GI Pipe"; LBL.net = "Shade Net (roof)"; LBL.scrn = "Disc / Screen Filter"; LBL.drip = "Inline Emitting / Lateral (ठिबक)"; LBL.imain = "Main Pipe (ठिबक)"; LBL.isub = "Sub main (ठिबक)"; LBL.iacc = "Installation & Fitting acc. (ठिबक)";
+LBL.flat = "Lateral pipes (फॉगिंग)"; LBL.fmain = "Main Pipe (फॉगिंग)"; LBL.fsub = "Sub main (फॉगिंग)"; LBL.facc = "Installation & Fitting acc. (फॉगिंग)"; LBL.bed = "Concrete Bed (बिलात नग / चौ.मी.)";
+var OKEYS = ["gi","net","ins","apr","prof","spr","scr","clamp","nut","door","fnd","fab","fndl","inst","bed","pump","tank","cpan","sand","scrn","drip","imain","isub","byp","vent","iacc","flat","fog","fsub","fmain","facc","trel","htp"];
+function ocrCanvas(c){   /* OCR साठी: करडा रंग, ~2480px रुंद */
+  var s = Math.min(1.6, 2480 / c.width), o = document.createElement("canvas"); o.width = Math.round(c.width * s); o.height = Math.round(c.height * s);
+  var g = o.getContext("2d"); g.drawImage(c, 0, 0, o.width, o.height);
+  var d = g.getImageData(0, 0, o.width, o.height), p = d.data; for(var i = 0; i < p.length; i += 4){ var y = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = p[i + 1] = p[i + 2] = y; }
+  g.putImageData(d, 0, 0); return o;
+}
+function errText(e){ if(!e) return "कारण कळले नाही"; if(typeof e === "string") return e; return e.message || (e.type ? "worker " + e.type : "") || String(e); }
+/* Worker चालतो का? (काही app मधील preview / sandbox मध्ये बंद असतो — तिथे OCR चालत नाही) */
+function workerOK(){ try{ if(typeof Worker === "undefined") return false; var u = URL.createObjectURL(new Blob(["self.onmessage=function(){}"], { type:"text/javascript" })), w = new Worker(u); w.terminate(); URL.revokeObjectURL(u); return true; }catch(e){ return false; } }
+var PREVIEW_MSG = "हे पान एखाद्या app च्या <b>preview</b> मध्ये उघडले आहे, तिथे बिल वाचण्याची (OCR) सोय बंद असते.<br>👉 हीच link <b>Safari / Chrome</b> मध्ये उघडा (उदा. <i>…github.io/…/mb.html</i>) आणि परत upload करा. QR असलेले बिल मात्र इथेही चालते.";
+function runOCR(canvases){
+  if(!canvases || !canvases.length){ status("❌ फाईल वाचता आली नाही.", "err"); return; }
+  var pages = canvases.slice(0, 4).reverse();   /* PDF शेवटून उघडले होते → पहिले पान आधी */
+  if(!workerOK() || String(location.origin) === "null"){ status("❌ QR सापडला नाही, आणि " + PREVIEW_MSG, "err"); return; }
+  if(!navigator.onLine){ status("❌ QR सापडला नाही. बिल अक्षरांनी वाचण्यासाठी (OCR) Internet लागते — Internet चालू करून परत upload करा, किंवा \"कोरे MB\" वापरा.", "err"); return; }
+  status("🔍 QR सापडला नाही — आता बिलातील अक्षरे वाचत आहे (OCR)…<br><small>पहिल्यांदा सुमारे 15 MB download होते; 30–90 सेकंद लागू शकतात.</small>");
+  var worker = null, texts = [[], [], []], modes = ["4", "6", "3"];
+  loadJs(TESS).then(function(){
+    var cur = { p:0, n:pages.length, pass:1 };
+    return window.Tesseract.createWorker("eng", 1, { logger:function(m){ if(m.status === "recognizing text") status("🔍 बिल वाचत आहे… पान " + (cur.p + 1) + "/" + cur.n + " · फेरी " + cur.pass + " · " + Math.round((m.progress || 0) * 100) + "%"); } })
+      .then(function(w){ worker = w;
+        function pass(mi){ cur.pass = mi + 1;
+          return worker.setParameters({ tessedit_pageseg_mode:modes[mi] }).then(function(){
+            return pages.reduce(function(pr, c, i){ return pr.then(function(){ cur.p = i; return worker.recognize(ocrCanvas(c)).then(function(r){ texts[mi].push(r.data.text || ""); }); }); }, Promise.resolve()); }); }
+        return pass(0).then(function(){
+          var r = OCRP.merge([texts[0].join("\n")]), weak = OKEYS.filter(function(k){ return !r.items[k] || r.items[k].conf < 2; }).length;
+          if(weak <= 2) return;                       /* जवळजवळ सर्व खात्रीचे — पुरे */
+          return pass(1).then(function(){ return pass(2); });
+        });
+      });
+  }).then(function(){
+    if(worker) worker.terminate();
+    OCRR = OCRP.merge(texts.filter(function(t){ return t.length; }).map(function(t){ return t.join("\n"); }));
+    showOCR(OCRR, pages);
+  }).catch(function(e){ if(worker) try{ worker.terminate(); }catch(x){} var why = errText(e); status("❌ बिल वाचता आले नाही (" + esc(why) + ").<br>" + (/worker|security|insecure|denied|null/i.test(why) ? PREVIEW_MSG : "Internet तपासून परत प्रयत्न करा, किंवा \"कोरे MB\" वापरून हाताने भरा."), "err"); });
+}
+function showOCR(r, pages){
+  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"]];
+  $("ocrHead").innerHTML = HF.map(function(f){ return '<label class="l">' + f[1] + ' <input class="inp" data-h="' + f[0] + '" value="' + esc(h[f[0]] || "") + '"></label>'; }).join("");
+  var found = 0, sure = 0;
+  $("ocrRows").innerHTML = OKEYS.map(function(k){ var it = r.items[k] || { q:null, conf:0 }, c = it.q == null ? 0 : it.conf; if(it.q != null) found++; if(c === 2) sure++;
+    return '<tr class="s' + c + '"><td><b>' + esc(LBL[k] || k) + "</b><small title=\"" + esc(r.raw[k] || "") + "\">" + esc(r.raw[k] || "—") + '</small></td><td><input inputmode="decimal" data-k="' + k + '" value="' + (it.q == null ? "" : esc(it.q)) + '" aria-label="' + esc(LBL[k] || k) + '"></td><td>' +
+      (c === 2 ? '<span class="tag ok">✔ खात्री</span>' : c === 1 ? '<span class="tag ch">⚠ तपासा' + (it.conflict != null ? " (" + esc(it.conflict) + "?)" : "") + "</span>" : '<span class="tag no">— सापडले नाही</span>') + "</td></tr>"; }).join("");
+  $("ocrImgs").innerHTML = pages.map(function(c, i){ return '<img alt="बिल पान ' + (i + 1) + '" src="' + c.toDataURL("image/jpeg", 0.7) + '">'; }).join("");
+  $("cOcr").hidden = false; $("cOcr").scrollIntoView({ behavior:"smooth" });
+  status("🔍 बिल वाचले — " + found + " बाबी सापडल्या (" + sure + " खात्रीच्या). खाली तपासा आणि \"MB मध्ये भरा\" दाबा.", found ? "ok" : "warn");
+}
+$("ocrImgs").onclick = function(e){ if(e.target.tagName === "IMG"){ var w = window.open(); if(w) w.document.write('<img src="' + e.target.src + '" style="width:100%">'); } };
+$("bOcrNo").onclick = function(){ $("cOcr").hidden = true; status(""); };
+$("bOcrOk").onclick = function(){
+  var d = { ocr:true, q:{}, amt:{} };
+  document.querySelectorAll("#ocrHead [data-h]").forEach(function(x){ d[x.getAttribute("data-h")] = x.value.trim(); });
+  d.co = OCRR && OCRR.head.co || ""; d.tpl = "";
+  document.querySelectorAll("#ocrRows [data-k]").forEach(function(x){ var v = parseFloat(String(x.value).replace(/,/g, "")); if(isFinite(v) && v > 0) d.q[x.getAttribute("data-k")] = v; });
+  if(!d.area && d.w && d.l) d.area = String(Math.round(parseFloat(d.w) * parseFloat(d.l)));
+  M = fromQR(d); render(); $("cOcr").hidden = true;
+  status("✔ तपासलेली माहिती MB मध्ये भरली — " + esc(d.name || "") + ". प्रत्यक्ष मोजमाप तपासा.", "ok");
+  setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
+};
+
+/* ---------- जतन / यादी ---------- */
+function save(){
+  if(!M) return; M.at = new Date().toISOString(); M.sign = off();
+  var L = (LS("mb_list") || []).filter(function(x){ return x.id !== M.id; }); L.unshift(JSON.parse(JSON.stringify(M)));
+  if(LS("mb_list", L)) status("💾 जतन झाले — " + esc(M.ben.name || "MB") + ". (फक्त या फोनमध्ये)", "ok"); else alert("जतन झाले नाही — browser storage बंद आहे.");
+}
+$("bSave").onclick = save;
+function renderList(){
+  var q = $("q").value.trim().toLowerCase(), L = (LS("mb_list") || []).filter(function(x){ return !q || [x.ben.name, x.ben.vil, x.src && x.src.no].join(" ").toLowerCase().indexOf(q) >= 0; });
+  $("list").innerHTML = L.length ? L.map(function(x){ return '<div class="it"><div class="m"><b>' + esc(x.ben.name || "(नाव नाही)") + "</b><small>" + esc(x.ben.vil || "") + (x.src ? " · Invoice " + esc(x.src.no) + " · " + esc(x.src.coName) : " · हाताने") + " · " + esc(x.bab.type || "") + " " + esc(x.bab.area || "") + " चौ.मी. · जतन " + new Date(x.at).toLocaleDateString("en-IN") + '</small></div><button type="button" class="btn" data-o="' + esc(x.id) + '">उघडा</button><button type="button" class="btn" data-d="' + esc(x.id) + '" aria-label="काढा" style="color:#a3321c">🗑</button></div>'; }).join("") : '<p class="hint">अजून काही जतन केलेले नाही.</p>';
+}
+$("q").oninput = renderList;
+$("list").onclick = function(e){
+  var o = e.target.getAttribute("data-o"), d = e.target.getAttribute("data-d"), L = LS("mb_list") || [];
+  if(o){ M = L.filter(function(x){ return x.id === o; })[0]; $("cList").hidden = true; $("cLoad").hidden = false; render(); $("cInfo").scrollIntoView(); }
+  if(d && confirm("हे MB या फोनमधून काढायचे?")){ LS("mb_list", L.filter(function(x){ return x.id !== d; })); renderList(); }
+};
+$("bList").onclick = function(){ var h = !$("cList").hidden; $("cList").hidden = h; if(!h){ renderList(); $("cList").scrollIntoView({ behavior:"smooth" }); } };
+$("bLoad").onclick = function(){ $("cLoad").hidden = false; window.scrollTo({ top:0, behavior:"smooth" }); $("file").click(); };
+function doPrint(){ if(!M) return; save(); var t = document.title; document.title = "MB - " + (M.ben.name || "") + " - " + (M.src ? M.src.no.replace(/\//g, "-") : ""); setTimeout(function(){ window.print(); document.title = t; }, 200); }
+$("bPrint").onclick = doPrint; $("bPrint2").onclick = doPrint;
+
+/* ---------- अधिकारी नावे ---------- */
+(function(){ var o = off(); $("oSak").value = o.sak || ""; $("oMak").value = o.mak || ""; $("oUak").value = o.uak || "";
+  ["oSak","oMak","oUak"].forEach(function(id){ $(id).oninput = function(){ LS("mb_off", { sak:$("oSak").value.trim(), mak:$("oMak").value.trim(), uak:$("oUak").value.trim() }); if(M){ M.sign = off(); render(); } }; }); })();
+
+/* ---------- फोन Camera ने QR scan → link ने हे पान उघडले ---------- */
+if(/MB[12]\|/.test(decodeHash(location.hash))){ openQR(location.hash, "link"); try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+else { var dr = LS("mb_draft"); if(dr && dr.ben){ M = dr; render(); status("मागील अपूर्ण MB उघडले (" + esc(dr.ben.name || "") + "). नवीन बिलासाठी \"📥 नवीन बिल\".", "warn"); } }
+})();
+</script>
+</body>
+</html>
