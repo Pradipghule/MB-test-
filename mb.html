@@ -136,7 +136,7 @@
   <button type="button" class="btn" id="bLoad">📥 नवीन बिल</button>
   <button type="button" class="btn" id="bList">📋 जतन केलेले</button>
   <button type="button" class="btn" id="bPrint" hidden>🖨 Print / PDF</button>
-  <span class="credit">Developed by<br>Mr. Pradip Ghule Patil.<br><span class="ver">आवृत्ती 9.11-PDF2</span></span>
+  <span class="credit">Developed by<br>Mr. Pradip Ghule Patil.<br><span class="ver">आवृत्ती 9.11-OCR3</span></span>
 </div></header>
 
 <main>
@@ -312,11 +312,22 @@ function fromQR(d){
   RFG.forEach(function(r){ if(m.ch[r[0]].s) m.f6.fg[r[0]] = { sp:r[0] === "flat" ? "Polytube" : /main|sub/.test(r[0]) ? "PVC" : "—", yn:"Yes" }; });
   /* अनुदान — बिलातील रक्कम (हिशोब नाही) */
   var A = d.amt || {}; ["s","c","d","e","f"].forEach(function(k){ if(A[k]) m.an[k] = { amt:Number(A[k]).toLocaleString("en-IN") }; });
+  if(A.g) m.an.G = String(Math.round(A.g));
+  /* ऐच्छिक साहित्य एकच असल्यास त्याची ओळ = ऐच्छिक एकूण रक्कम */
+  var oks = ["ofan","htp","othermal","otdoor","trel","owork","omulch","otank"].filter(function(k){ return q[k] > 0; });
+  if(A.f && oks.length === 1){ m.an.f = m.an.f || {}; m.an.f["o" + (["ofan","htp","othermal","otdoor","trel","owork","omulch","otank"].indexOf(oks[0]) + 1)] = { amt:Number(A.f).toLocaleString("en-IN") }; }
   if(A.g && !["s","c","d","e","f"].some(function(k){ return A[k]; })) m.an.B = Number(A.g).toLocaleString("en-IN");   /* भागनिहाय रक्कम नसल्यास एकूण बिल = ब */
   if(d.no) m.an.billNo = d.no + (d.date ? "\n" + dmy(d.date) : "");
   m.an.inv = CO[d.co] || "";
   /* पुरवठादाराची माहिती — याच कंपनीसाठी मागच्या वेळी भरलेली */
-  var sup = d.co && LS("mb_sup_" + d.co); m.f5.sup = sup && sup.sup || { name:CO[d.co] ? "मे. " + CO[d.co] : "" }; m.f5.cmp = sup && sup.cmp || {};
+  var sup = d.co && LS("mb_sup_" + d.co); m.f5.sup = JSON.parse(JSON.stringify(sup && sup.sup || { name:CO[d.co] ? "मे. " + CO[d.co] : "" })); m.f5.cmp = JSON.parse(JSON.stringify(sup && sup.cmp || {}));
+  if(d.reg) m.f5.sup.reg = d.reg;
+  /* बिलातील Make / BIS → ५ ब */
+  var mkx = d.make || {}, CM = { gi:"gi", ins:"ins", apr:"apr" };
+  Object.keys(CM).forEach(function(k){ if(mkx[k] && mkx[k].mk){ m.f5.cmp[CM[k]] = m.f5.cmp[CM[k]] || {}; m.f5.cmp[CM[k]].mk = mkx[k].mk; } });
+  if(mkx.net && mkx.net.mk){ var nk = mkx.net.type === "tape" ? "tape" : "mono"; m.f5.cmp[nk] = m.f5.cmp[nk] || {}; m.f5.cmp[nk].mk = mkx.net.mk; }
+  if(mkx.gi){ var tt = d.gi === "2" ? "t2" : "t1"; m.f5[tt] = {}; for(var gi5 = 0; gi5 < 4; gi5++) m.f5[tt][gi5] = { mk:mkx.gi.mk || "", bis:mkx.gi.bis || "" }; }
+  if(d.gi) m.src.gi = d.gi;
   return m;
 }
 
@@ -495,13 +506,13 @@ function pages6k(){
     '<p class="small">(वरील तक्त्यामध्ये मार्गदर्शक सूचनेत आकारमानानुसार दिलेल्या साहित्य यादीप्रमाणे सर्व साहित्याचा वापर करुन त्याप्रमाणे सर्व साहित्य मापनपुस्तिकेत नोंदविण्यात आलेले आहे काय, याचे अवलोकन करावे.)</p>' + pmFoot() + "</div>";
   var D = '<div class="pg"><h5 style="margin-top:0">१५. वैकल्पिक साहित्याच्या विविध घटकांचे तांत्रिक निकष, परिमाण:-</h5>' + optTable() +
     '<div class="q"><span>१६. वरील मुद्दा क्र. ११ ते १५ मध्ये सेवा पुरवठादाराने पुरविलेल्या व देयकामध्ये दर्शविलेल्या साहित्याच्या दर्जाबाबत तसेच गुणधर्माबाबत व इतर तपशील लॉट नं., कंपनी, इ नमुद आहे काय?</span>' + YN("f6.q16") + "</div>" +
-    '<h5>१७. अनुदान परिगणना -</h5><div class="lines">अ. मापनानुसार क्षेत्रफळ ' + F("bab.area", "w80") + " चौ.मी. X आकारमानासाठी उच्चतम शिफारस केलेला प्रति चौ.मी. दर (रु. " + F("an.D", "w80") + ") = " + F("an.A", "w140") + " (अ)</div>" + pmFoot() + "</div>";
+    '<h5>१७. अनुदान परिगणना -</h5><div class="lines">अ. मापनानुसार क्षेत्रफळ ' + F("bab.area", "w80") + " चौ.मी. X आकारमानासाठी उच्चतम शिफारस केलेला प्रति चौ.मी. दर (रु. " + F("an.D", "w80") + ") = " + F("an.A", "w140") + " (अ)" + capNote() + "</div>" + pmFoot() + "</div>";
   var E = '<div class="pg"><h5 style="margin-top:0">ब. देयकानुसार</h5>' + anTable(AN6, true) + '<div class="lines" style="margin-top:8px">' +
     "१८. उपरोक्त परिशिष्टाप्रमाणे वापरण्यात आलेल्या साहित्याची एकुण किंमत (प्रत्यक्ष खर्च) रु. " + F("an.B", "w140") + " (ब)" +
     "<br>१९. प्रत्यक्ष खर्चाप्रमाणे (ब) व क्षेत्रफळानुसार येणारा प्रती चौ.मी. दर ( ब ÷ क्षेत्रफळ ) = रु. " + F("an.K", "w80") + " (क)" +
     "<br>२०. मार्गदर्शक सूचनेत उपरोक्त आकारमानासाठी शिफारस केलेला उच्चतम प्रती चौ.मी. दर रु. " + F("an.D", "w80") + " (ड)" +
     "<br>२१. उपरोक्त 'क' व 'ड' पैकी कमी असलेला प्रती चौ.मी. दर रु. " + F("an.I", "w80") + " (इ)" +
-    "<br>२२. अर्थसहाय्यासाठी पात्र खर्च रक्कम (२१ येथील प्रती चौ.मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) रु. " + F("an.Ph", "w140") + " (फ)</div>" + pmFoot() + "</div>";
+    "<br>२२. अर्थसहाय्यासाठी पात्र खर्च रक्कम (२१ येथील प्रती चौ.मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) रु. " + F("an.Ph", "w140") + " (फ)" + capNote() + "</div>" + pmFoot() + "</div>";
   var Fp = '<div class="pg"><div class="lines">२३. फ प्रमाणे उभारणी खर्च ग्राह्य धरून अर्थसहाय्य (' + F("an.pct", "w40", "उदा. 50") + " टक्के) रक्कम रु. " + F("an.sub", "w140") + "<br>अक्षरी (" + F("an.words", "wfull") + ")<br>मंजूर करण्याची शिफारस करण्यात येत आहे.</div>" +
     '<p class="pp">२४. वरील प्रमाणे सर्व तांत्रिक निकषांची पुर्तता करत आहे. तसेच या शेडनेटगृहामध्ये लाभार्थ्याने ' + F("f6.crop", "w140", "पीक") + " पीक लागवडीसाठी गादी वाफे तयार करणे, ठिबक सिंचन / मायक्रो / मिनी / इन्व्हर्टेड स्प्रिंकलर, फॉगिंग यंत्रणा व कंट्रोल हेड संचाची जोडणी पूर्ण केली असून सदर यंत्रणा कार्यान्वित केली असल्याची खात्री केली आहे.</p>" +
     '<table class="sig2" style="margin-top:20px"><tr><td>' + FV(M.ben.name) + "<br>लाभार्थ्याचे नाव व स्वाक्षरी</td><td><br>नोंदणीकृत सेवा पुरवठादाराचे नाव व स्वाक्षरी</td></tr>" +
@@ -516,7 +527,7 @@ function page9eAn(){
     "<br>१०. प्रत्यक्ष खर्चाप्रमाणे (ब) व क्षेत्रफळानुसार येणारा प्रती चौ.मी. दर = ( ब ÷ क्षेत्रफळ अ ) = रु. " + F("an.K", "w80") + " (क)" +
     "<br>११. मार्गदर्शक सूचनेत उपरोक्त आकारमानासाठी शिफारस केलेला प्रती चौ.मी. दर रु. " + F("an.D", "w80") + " (ड)" +
     "<br>१२. उपरोक्त 'क' व 'ड' पैकी कमी असलेला प्रती चौ. मी. दर रु. " + F("an.I", "w80") + " (इ)" +
-    "<br>१३. अर्थसहाय्यासाठी पात्र खर्च रक्कम (१२ येथील प्रती चौ. मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) = रु. " + F("an.Ph", "w140") + " (फ)" +
+    "<br>१३. अर्थसहाय्यासाठी पात्र खर्च रक्कम (१२ येथील प्रती चौ. मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) = रु. " + F("an.Ph", "w140") + " (फ)" + capNote() +
     "<br>१४. फ प्रमाणे उभारणी खर्च ग्राह्य धरुन अर्थसहाय्य रक्कम (" + F("an.pct", "w40", "उदा. 50") + " टक्के) = रु. " + F("an.sub", "w140") +
     "<br>&nbsp;&nbsp;&nbsp; उपरोक्तप्रमाणे रक्कम रु. " + F("an.sub", "w140") + " (अक्षरी) (" + F("an.words", "wfull") + ")<br>&nbsp;&nbsp;&nbsp; अर्थसहाय्य रक्कम अदायगीस मान्यता देण्यात येत आहे.</div>" + sigBlock() + "</div>";
 }
@@ -573,10 +584,19 @@ function guessTpl(m){
   if(/FTSNH|FLAT|SNH|SHADE/.test(t)) return h != null && h < 3.6 ? "fsn325" : "fsn4";
   return "";
 }
+/* बिलातील ठिबक / फॉगिंगच्या प्रति चौ.मी. दरावरून क्षेत्र ओळखा: सर्वसाधारण ₹24/₹37, अनुसूचित ₹27.60/₹42.55 (+ कंपनीचा ₹1) */
+function arGuess(m){
+  var A = Math.min(num(m.bab.area) || 0, 4000), an = m.an || {}, c = num((an.c || {}).amt), d = num((an.d || {}).amt), vs = 0, n = 0;
+  if(!A) return "";
+  if(c){ var rc = c / A; vs += Math.abs(rc - 28.6) < Math.abs(rc - 25) ? 1 : -1; n++; }
+  if(d){ var rd = d / A; vs += Math.abs(rd - 43.55) < Math.abs(rd - 38) ? 1 : -1; n++; }
+  return n && vs > 0 ? "s" : (n ? "g" : "");
+}
 function guideInit(m){
   var g = m.gd = m.gd || {};
   if(!g.tpl) g.tpl = guessTpl(m);
-  if(!g.ar){ var ar = LS("mb_ar") || {}; g.ar = ar[String(m.ben.tal || "").trim().toLowerCase()] || "g"; }
+  if(!g.ar){ var ar = LS("mb_ar") || {}; g.ar = ar[String(m.ben.tal || "").trim().toLowerCase()] || arGuess(m) || "g"; }
+  if(!g.gi && m.src && m.src.gi) g.gi = m.src.gi;
   if(!g.gi) g.gi = /II/.test(String((m.r9a.gi || {}).s || "")) && !/Type\s*-?\s*I\b/i.test(String((m.r9a.gi || {}).s || "")) ? "2" : "1";
   if(!g.roof) g.roof = "mono";
   guideApply(m);
@@ -614,6 +634,7 @@ function gdChange(){
   if(M.ben.tal){ var ar = LS("mb_ar") || {}; ar[String(M.ben.tal).trim().toLowerCase()] = g.ar; LS("mb_ar", ar); }
   guideApply(M); calcAn(true); gdUi();
 }
+function capNote(){ var a = num(M && M.bab.area); return a > 4000 ? ' <span class="small">(प्रत्यक्ष क्षेत्र ' + inr(a) + " चौ.मी.; अनुदानासाठी कमाल 4000 चौ.मी. धरले)</span>" : ""; }
 function calcAn(quiet, editing){
   var area = num(M.bab.area), an = M.an = M.an || {}, keys = ["s","c","d","e","f"], tot = { amt:0, nAmt:0, rec:0 }, normSum = 0, any = 0;
   function put(path, v){ if(path === editing || v == null || v === "") return; set(path, v); }
@@ -631,14 +652,16 @@ function calcAn(quiet, editing){
   });
   if(!any && /\.amt$/.test(editing || "")) ["an.tot.amt","an.tot.rec","an.B"].forEach(function(f){ set(f, ""); });
   if(any){ put("an.tot.amt", inr(tot.amt)); if(tot.nAmt) put("an.tot.nAmt", inr(tot.nAmt)); put("an.tot.rec", inr(tot.rec)); put("an.B", inr(tot.amt)); }
+  var G = num(an.G); if(any && G && Math.abs(G - tot.amt) <= 5 && editing !== "an.B"){ tot.amt = G; put("an.tot.amt", inr(G)); put("an.B", inr(G)); }   /* भागांच्या रकमा गोल केल्याने ₹1-2 फरक → Grand Total */
   var B = any ? tot.amt : num(an.B);
   var K = B != null && area ? B / area : null; if(K != null) put("an.K", inr(K, 2));
   if(normSum) put("an.D", inr(normSum, 2));
   var D = normSum || num(an.D), I = K != null && D != null ? Math.min(K, D) : K;   /* बिलाची रक्कम (ब) नसल्यास क, इ, फ, अनुदान काढत नाही */
   if(I != null) put("an.I", inr(I, 2));
-  if(D != null && area) put("an.A", inr(Math.round(D * area)));
+  var aS = area ? Math.min(area, 4000) : null;   /* अनुदानासाठी कमाल 4000 चौ.मी. */
+  if(D != null && aS) put("an.A", inr(Math.round(D * aS)));
   if(K == null) ["an.K","an.I","an.Ph","an.sub","an.words"].forEach(function(f){ if(f !== editing) set(f, ""); });
-  var Ph = I != null && area ? Math.round(I * area) : null; if(Ph != null) put("an.Ph", inr(Ph));
+  var Ph = I != null && aS ? Math.round(I * aS) : null; if(Ph != null) put("an.Ph", inr(Ph));
   var pct = num(an.pct);
   if(Ph != null && pct != null){ var sub = Math.round(Ph * pct / 100); put("an.sub", inr(sub)); put("an.words", mrWords(sub) + " रुपये मात्र"); }
   if(quiet){ syncAn(editing); draft(); return; }
@@ -653,7 +676,7 @@ function syncAn(editing){
 
 /* ---------- 🔤 इंग्रजी नावे → मराठी (बिलातील नाव / गाव / तालुका / जिल्हा) ----------
    क्रम: १) नेहमीच्या नावांचा शब्दकोश  २) Google Input Tools (Internet असल्यास)  ३) अक्षरानुसार नियम. अधिकारी बदलू शकतात. */
-var MRD = (function(){ var o = {}, s = "rao:राव,patil:पाटील,raut:राऊत,pawar:पवार,jadhav:जाधव,shinde:शिंदे,deshmukh:देशमुख,kale:काळे,more:मोरे,gaikwad:गायकवाड,ghule:घुले,sahebrao:साहेबराव,vishal:विशाल,pradip:प्रदीप,pradeep:प्रदीप,budha:बुधा,nashik:नाशिक,nasik:नाशिक,dindori:दिंडोरी,rahata:राहाता,ahilyanagar:अहिल्यानगर,ahmednagar:अहमदनगर,ahmadnagar:अहमदनगर,pune:पुणे,kasbe:कसबे,vani:वणी,wani:वणी,pimplas:पिंपळस,kopargaon:कोपरगाव,sangamner:संगमनेर,shrirampur:श्रीरामपूर,rahuri:राहुरी,newasa:नेवासा,shevgaon:शेवगाव,niphad:निफाड,sinnar:सिन्नर,yeola:येवला,yevla:येवला,malegaon:मालेगाव,satana:सटाणा,baglan:बागलाण,kalwan:कळवण,chandwad:चांदवड,igatpuri:इगतपुरी,trimbakeshwar:त्र्यंबकेश्वर,trimbak:त्र्यंबक,peth:पेठ,surgana:सुरगाणा,deola:देवळा,nandgaon:नांदगाव,jalgaon:जळगाव,dhule:धुळे,aurangabad:औरंगाबाद,sambhajinagar:संभाजीनगर,chhatrapati:छत्रपती,satara:सातारा,sangli:सांगली,solapur:सोलापूर,kolhapur:कोल्हापूर,beed:बीड,latur:लातूर,jalna:जालना,parbhani:परभणी,nanded:नांदेड,buldhana:बुलढाणा,akola:अकोला,amravati:अमरावती,nagpur:नागपूर,thane:ठाणे,palghar:पालघर,raigad:रायगड,ratnagiri:रत्नागिरी,ramesh:रमेश,suresh:सुरेश,mahesh:महेश,ganesh:गणेश,santosh:संतोष,sunil:सुनील,anil:अनिल,vijay:विजय,sanjay:संजय,ajay:अजय,dattatray:दत्तात्रय,dattatraya:दत्तात्रय,balasaheb:बाळासाहेब,bhausaheb:भाऊसाहेब,annasaheb:अण्णासाहेब,babasaheb:बाबासाहेब,nanasaheb:नानासाहेब,appasaheb:आप्पासाहेब,nana:नाना,bhau:भाऊ,kisan:किसन,shankar:शंकर,vitthal:विठ्ठल,dnyaneshwar:ज्ञानेश्वर,dnyandev:ज्ञानदेव,sopan:सोपान,prakash:प्रकाश,ashok:अशोक,ravindra:रवींद्र,rajendra:राजेंद्र,nitin:नितीन,sachin:सचिन,rahul:राहुल,amol:अमोल,yogesh:योगेश,sandip:संदीप,sandeep:संदीप,dipak:दीपक,deepak:दीपक,kailas:कैलास,sharad:शरद,madhukar:मधुकर,bapu:बापू,shivaji:शिवाजी,sambhaji:संभाजी,tukaram:तुकाराम,eknath:एकनाथ,laxman:लक्ष्मण,lakshman:लक्ष्मण,maruti:मारुती,popat:पोपट,kashinath:काशिनाथ,namdev:नामदेव,bhimrao:भीमराव,haribhau:हरिभाऊ,bhagwan:भगवान,bhaskar:भास्कर,dilip:दिलीप,manoj:मनोज,sagar:सागर,kiran:किरण,tushar:तुषार,swapnil:स्वप्नील,akash:आकाश,vikas:विकास,vilas:विलास,vasant:वसंत,uttam:उत्तम,arun:अरुण,raju:राजू,raju:राजू,somnath:सोमनाथ,gorakh:गोरख,machhindra:मच्छिंद्र,kulkarni:कुलकर्णी,kadam:कदम,salunkhe:साळुंखे,thorat:थोरात,bhosale:भोसले,chavan:चव्हाण,wagh:वाघ,sonawane:सोनवणे,gite:गिते,sangale:सांगळे,aher:आहेर,pagar:पगार,borse:बोरसे,kshirsagar:क्षीरसागर,bhujbal:भुजबळ,darade:दराडे,kakad:काकड,nikam:निकम,ahire:अहिरे,gaware:गवारे,kote:कोते,avhad:आव्हाड,sanap:सानप,bodke:बोडके,kharde:खर्डे,kute:कुटे,lokhande:लोखंडे,waje:वाजे,kokate:कोकाटे,gade:गाडे,kasar:कासार,zende:झेंडे,dhatrak:धात्रक,pingle:पिंगळे,ugale:उगले,ghuge:घुगे,tambe:तांबे,shelke:शेळके,khairnar:खैरनार,dighe:दिघे,bachhav:बच्छाव,thakare:ठाकरे,thackeray:ठाकरे,mali:माळी,deore:देवरे,suryavanshi:सूर्यवंशी,gangurde:गांगुर्डे,gavit:गावित,bhoye:भोये,pawara:पावरा,mahale:महाले,jagtap:जगताप,kokane:कोकणे,shelar:शेलार,gunjal:गुंजाळ,dhokane:ढोकणे,kanhore:कन्होरे,katkar:काटकर,desai:देसाई,deshpande:देशपांडे,joshi:जोशी,shaikh:शेख,sheikh:शेख,pathan:पठाण,inamdar:इनामदार,sayyed:सय्यद,khan:खान,mohammad:मोहम्मद,shri:श्री,smt:श्रीमती,shrimati:श्रीमती,mr:श्री,mrs:श्रीमती".split(",");
+var MRD = (function(){ var o = {}, s = "rao:राव,patil:पाटील,raut:राऊत,pawar:पवार,jadhav:जाधव,shinde:शिंदे,deshmukh:देशमुख,kale:काळे,more:मोरे,gaikwad:गायकवाड,ghule:घुले,sahebrao:साहेबराव,vishal:विशाल,pradip:प्रदीप,pradeep:प्रदीप,budha:बुधा,nashik:नाशिक,nasik:नाशिक,dindori:दिंडोरी,rahata:राहाता,rahta:राहाता,omkar:ओंकार,onkar:ओंकार,kudale:कुदळे,kudle:कुदळे,ahilyanagar:अहिल्यानगर,ahmednagar:अहमदनगर,ahmadnagar:अहमदनगर,pune:पुणे,kasbe:कसबे,vani:वणी,wani:वणी,pimplas:पिंपळस,kopargaon:कोपरगाव,sangamner:संगमनेर,shrirampur:श्रीरामपूर,rahuri:राहुरी,newasa:नेवासा,shevgaon:शेवगाव,niphad:निफाड,sinnar:सिन्नर,yeola:येवला,yevla:येवला,malegaon:मालेगाव,satana:सटाणा,baglan:बागलाण,kalwan:कळवण,chandwad:चांदवड,igatpuri:इगतपुरी,trimbakeshwar:त्र्यंबकेश्वर,trimbak:त्र्यंबक,peth:पेठ,surgana:सुरगाणा,deola:देवळा,nandgaon:नांदगाव,jalgaon:जळगाव,dhule:धुळे,aurangabad:औरंगाबाद,sambhajinagar:संभाजीनगर,chhatrapati:छत्रपती,satara:सातारा,sangli:सांगली,solapur:सोलापूर,kolhapur:कोल्हापूर,beed:बीड,latur:लातूर,jalna:जालना,parbhani:परभणी,nanded:नांदेड,buldhana:बुलढाणा,akola:अकोला,amravati:अमरावती,nagpur:नागपूर,thane:ठाणे,palghar:पालघर,raigad:रायगड,ratnagiri:रत्नागिरी,ramesh:रमेश,suresh:सुरेश,mahesh:महेश,ganesh:गणेश,santosh:संतोष,sunil:सुनील,anil:अनिल,vijay:विजय,sanjay:संजय,ajay:अजय,dattatray:दत्तात्रय,dattatraya:दत्तात्रय,balasaheb:बाळासाहेब,bhausaheb:भाऊसाहेब,annasaheb:अण्णासाहेब,babasaheb:बाबासाहेब,nanasaheb:नानासाहेब,appasaheb:आप्पासाहेब,nana:नाना,bhau:भाऊ,kisan:किसन,shankar:शंकर,vitthal:विठ्ठल,dnyaneshwar:ज्ञानेश्वर,dnyandev:ज्ञानदेव,sopan:सोपान,prakash:प्रकाश,ashok:अशोक,ravindra:रवींद्र,rajendra:राजेंद्र,nitin:नितीन,sachin:सचिन,rahul:राहुल,amol:अमोल,yogesh:योगेश,sandip:संदीप,sandeep:संदीप,dipak:दीपक,deepak:दीपक,kailas:कैलास,sharad:शरद,madhukar:मधुकर,bapu:बापू,shivaji:शिवाजी,sambhaji:संभाजी,tukaram:तुकाराम,eknath:एकनाथ,laxman:लक्ष्मण,lakshman:लक्ष्मण,maruti:मारुती,popat:पोपट,kashinath:काशिनाथ,namdev:नामदेव,bhimrao:भीमराव,haribhau:हरिभाऊ,bhagwan:भगवान,bhaskar:भास्कर,dilip:दिलीप,manoj:मनोज,sagar:सागर,kiran:किरण,tushar:तुषार,swapnil:स्वप्नील,akash:आकाश,vikas:विकास,vilas:विलास,vasant:वसंत,uttam:उत्तम,arun:अरुण,raju:राजू,raju:राजू,somnath:सोमनाथ,gorakh:गोरख,machhindra:मच्छिंद्र,kulkarni:कुलकर्णी,kadam:कदम,salunkhe:साळुंखे,thorat:थोरात,bhosale:भोसले,chavan:चव्हाण,wagh:वाघ,sonawane:सोनवणे,gite:गिते,sangale:सांगळे,aher:आहेर,pagar:पगार,borse:बोरसे,kshirsagar:क्षीरसागर,bhujbal:भुजबळ,darade:दराडे,kakad:काकड,nikam:निकम,ahire:अहिरे,gaware:गवारे,kote:कोते,avhad:आव्हाड,sanap:सानप,bodke:बोडके,kharde:खर्डे,kute:कुटे,lokhande:लोखंडे,waje:वाजे,kokate:कोकाटे,gade:गाडे,kasar:कासार,zende:झेंडे,dhatrak:धात्रक,pingle:पिंगळे,ugale:उगले,ghuge:घुगे,tambe:तांबे,shelke:शेळके,khairnar:खैरनार,dighe:दिघे,bachhav:बच्छाव,thakare:ठाकरे,thackeray:ठाकरे,mali:माळी,deore:देवरे,suryavanshi:सूर्यवंशी,gangurde:गांगुर्डे,gavit:गावित,bhoye:भोये,pawara:पावरा,mahale:महाले,jagtap:जगताप,kokane:कोकणे,shelar:शेलार,gunjal:गुंजाळ,dhokane:ढोकणे,kanhore:कन्होरे,katkar:काटकर,desai:देसाई,deshpande:देशपांडे,joshi:जोशी,shaikh:शेख,sheikh:शेख,pathan:पठाण,inamdar:इनामदार,sayyed:सय्यद,khan:खान,mohammad:मोहम्मद,shri:श्री,smt:श्रीमती,shrimati:श्रीमती,mr:श्री,mrs:श्रीमती".split(",");
   s.forEach(function(x){ var a = x.split(":"); o[a[0]] = a[1]; }); return o; })();
 var TRC = [["ksh","क्ष"],["dny","ज्ञ"],["gny","ज्ञ"],["chh","छ"],["kh","ख"],["gh","घ"],["ch","च"],["jh","झ"],["th","थ"],["dh","ध"],["ph","फ"],["bh","भ"],["sh","श"],["k","क"],["g","ग"],["j","ज"],["t","त"],["d","द"],["n","न"],["p","प"],["f","फ"],["b","ब"],["m","म"],["y","य"],["r","र"],["l","ल"],["v","व"],["w","व"],["s","स"],["h","ह"],["z","झ"],["c","क"],["q","क"],["x","क्स"]];
 var TRV = [["aa","आ","ा"],["ai","ऐ","ै"],["au","औ","ौ"],["ee","ई","ी"],["oo","ऊ","ू"],["a","अ",""],["i","इ","ि"],["u","उ","ु"],["e","ए","े"],["o","ओ","ो"]];
@@ -854,7 +877,7 @@ var OCRP = (function(){
     ["prof", /alumin\w*\s*profile|\bprofiles?\b/i],
     ["spr", /locking\s*spring|\bsprings?\b/i],
     ["scr", /self\s*drill|tapping\s*screw/i],
-    ["acc", /fitting\s*accessor/i],
+    ["acc", /fitting\s*accessor|installation\s*&\s*fitting|installation\s+and\s+fitting/i],
     ["clamp", /clamps?\b/i],
     ["nut", /nut\s*&?\s*bolt|tensile/i],
     ["door", /\bfrp\b|\bdoor\b/i],
@@ -914,6 +937,19 @@ var OCRP = (function(){
     var u = UNIT.exec(line); if(u){ var after = nums(line.slice(u.index + u[0].length)); if(after.length && after[0] === Math.round(after[0])) return { q:after[0], conf:1 }; }
     return null;
   }
+  /* बिलातील Make / Company व BIS-CML (५ ब मधील उत्पादक तक्ता व GI पाईप तक्त्यासाठी) */
+  var MKR = { gi:/g\.?\s*i\.?\s*pipe\S*|gi\s*pipe\S*/i, net:/shade\s*net\s*(\([^)]*\))?|mono\s*net|tape\s*net/i, ins:/insect\s*net\s*(\([^)]*\))?/i, apr:/laminated\s*woven\s*film\s*(\([^)]*\))?|apron/i };
+  function makeOf(L, key){
+    if(!MKR[key]) return null; var m = MKR[key].exec(L); if(!m) return null;
+    var rest = L.slice(m.index + m[0].length).replace(/^[\s|\])}]+/, ""), mk = (/^(.*?)(?=\s*(?:\||\b[I1l|]S\b|\s-\s|\d{4,}|$))/.exec(rest) || [])[1] || "";
+    mk = mk.replace(/[|\[\]{}]/g, "").trim();
+    if(!/^[A-Za-z][A-Za-z .&]{1,24}$/.test(mk)) mk = "";
+    var o = { mk:mk };
+    if(key === "net") o.type = /tape/i.test(L) ? "tape" : "mono";
+    var bis = /([I1l|]S\s*[:(]?\s*\d{4,5}\s*[:\-]?\s*\d{0,4}\)?)\s*&?\s*(\d{10})?/i.exec(rest);
+    if(bis) o.bis = bis[1].replace(/^[1l|]S/i, "IS").replace(/\s+/g, " ").trim() + (bis[2] ? " & CML " + bis[2] : "");
+    return (o.mk || o.bis) ? o : null;
+  }
   function header(text){
     var t = text.replace(/[|]/g, " "), h = {}, m;
     if(/kisan\s*agro/i.test(t)) h.co = "kas"; else if(/sahyadri/i.test(t)) h.co = "sghc";
@@ -922,14 +958,20 @@ var OCRP = (function(){
     if(!h.vil && (m = /(?:मु\.?\s*पो\.?|मु\.?\s*\/\s*पो\.?)\s*[-:]?\s*([^,\n]+),\s*ता\.?\s*[-:]?\s*([^,\n]+),\s*जि\.?\s*[-:]?\s*([^.\n,]+)/.exec(t))){ h.vil = m[1].trim(); h.tal = m[2].trim(); h.dist = m[3].trim(); }
     ["vil","tal","dist"].forEach(function(k){ if(h[k]) h[k] = h[k].replace(/^.*[:：]\s*/, "").trim(); });
     if((m = /Marking\s*Code\s*[:;]?\s*([A-Za-z0-9][A-Za-z0-9\-\/]{4,})/i.exec(t))) h.mark = m[1];
-    if((m = /Mobile\s*No\s*[:;]?\s*(\d{10})/i.exec(t))) h.mobile = m[1];
-    if((m = /Survey\s*No\s*\/?\s*Gat\s*No\s*[:;]?\s*([0-9A-Za-z\/\-]+)/i.exec(t))) h.gat = m[1];
-    if((m = /Presanction\s*No\s*[:;]?\s*([0-9]{4}\s*-\s*[0-9]{2}\s*\/\s*[0-9]+)/i.exec(t))) h.pre = m[1].replace(/\s/g, "");
+    if(h.name) h.name = h.name.replace(/^[^A-Za-z\u0900-\u097F]+/, "").trim();   /* "© Omkar" सारखे सुरुवातीचे चिन्ह काढा */
+    /* जिल्हा पुढच्या ओळीत गेल्यास ("Dist-" ... नवीन ओळ "Ahilyanagar.") */
+    if(!h.dist && (m = /Dist[\s.\-:]*[^\n]*\n\s*([A-Za-z]{3,}(?:\s[A-Za-z]{3,})?)\s*\./.exec(t))) h.dist = m[1].trim();
+    if((m = /Mobile\s*N[o0]\.?\s*[:;.]?\s*((?:\d\s?){10})/i.exec(t))) h.mobile = m[1].replace(/\s/g, "");
+    if((m = /Survey\s*N[o0]\.?\s*\/?\s*Gat\s*N[o0]\.?\s*[:;.]?\s*([0-9][0-9A-Za-z\/\-]*)/i.exec(t))) h.gat = m[1];
+    if((m = /Presanction\s*N[o0]\.?\s*[:;.]?\s*([0-9]{4}\s*-\s*[0-9]{2}\s*\/\s*[0-9]+|[0-9A-Za-z][0-9A-Za-z\/\-]{1,30})/i.exec(t))) h.pre = m[1].replace(/\s/g, "");
+    if((m = /Registration\s*N[o0]\.?\s*[:;.]?\s*([A-Z][A-Za-z0-9.\/\-]{5,})/i.exec(t))) h.reg = m[1];
+    if((m = /Type\s*[:;.]?\s*Type\s*-?\s*(II|Il|lI|ll|11|2|I|l|1)\b/i.exec(t))) h.gi = /^(II|Il|lI|ll|11|2)$/i.test(m[1]) ? "2" : "1";
     if((m = /Model\s*[:;]?[^\n(]*\(\s*([A-Z]{3,6})\s*\)/.exec(t))) h.model = m[1];
     if((m = /(\d{2,3})\s*[xX×]\s*(\d{2,3})\s*=\s*([\d,]{3,})/.exec(t))){ h.w = m[1]; h.l = m[2]; h.area = m[3].replace(/,/g, ""); }
     if((m = /Height\s*\S{0,3}\s*([\d.]+)\s*Mtr/i.exec(t))) h.h = m[1];
-    if((m = /Scheme\s*Name\s*[:;]?\s*([A-Z]{3,10})/.exec(t))) h.scheme = m[1];
+    if((m = /Scheme\s*Name\s*[:;]?\s*([A-Z]{3,10})/.exec(t))) h.scheme = m[1]; else if(/\bMIDH\b|Integrated\s*Development\s*of\s*Horti/i.test(t)) h.scheme = "MIDH";
     if((m = /Tax\s*Invoice\s*No\s*[:;]?\s*([A-Z]{2,6}?)\s*[\/I1l|]?\s*(\d{2}\s*-\s*\d{2})\s*[\/I1l|]\s*(\d{1,4})/i.exec(t))) h.no = m[1].toUpperCase().replace(/^(KAST|SGHC)[I1L|]$/, "$1") + "/" + m[2].replace(/\s/g, "") + "/" + m[3];
+    else if((m = /\b(KAST|SGHC)\s*[\/I1l|]\s*(\d{2}\s*-\s*\d{2})\s*[\/I1l|]\s*(\d{1,4})\b/.exec(t))) h.no = m[1] + "/" + m[2].replace(/\s/g, "") + "/" + m[3];
     if((m = /Invoice\s*Date\s*[:;]?\s*(\d{1,2})[-\/ ]([A-Za-z]{3}|\d{1,2})[-\/ ](\d{4})/i.exec(t))){
       var MO = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 }, mo = isNaN(+m[2]) ? MO[m[2].toLowerCase()] : +m[2];
       if(mo) h.date = m[3] + "-" + String(mo).padStart(2, "0") + "-" + String(m[1]).padStart(2, "0"); }
@@ -945,7 +987,7 @@ var OCRP = (function(){
     return h;
   }
   function parse(text){
-    var lines = String(text).split(/\n/), sec = "", seen = {}, items = {}, raw = {};
+    var lines = String(text).split(/\n/), sec = "", seen = {}, items = {}, raw = {}, make = {};
     lines.forEach(function(L){
       var u = L.toUpperCase();
       if(/IRRIGATION\s*SYSTEM/.test(u)) sec = "C"; else if(/FOGGING/.test(u)) sec = "D"; else if(/CONTROL\s*HEAD/.test(u)) sec = "E";
@@ -966,8 +1008,9 @@ var OCRP = (function(){
       var q = qtyOf(L);
       if(items[key] && !q) return;
       items[key] = q ? q : { q:null, conf:0 }; raw[key] = L.trim().slice(0, 140);
+      var mk = makeOf(L, key); if(mk && !make[key]) make[key] = mk;
     });
-    return { head:header(text), items:items, raw:raw };
+    return { head:header(text), items:items, raw:raw, make:make };
   }
   /* अनेक OCR पद्धतींचे निकाल एकत्र: प्रत्येक ओळीसाठी सर्वात खात्रीची Qty */
   function merge(texts){
@@ -975,6 +1018,7 @@ var OCRP = (function(){
     texts.forEach(function(t){ var r = parse(t);
       if(!R0){ R0 = r; return; }
       Object.keys(r.head).forEach(function(k){ if(!R0.head[k]) R0.head[k] = r.head[k]; });
+      Object.keys(r.make || {}).forEach(function(k){ R0.make = R0.make || {}; if(!R0.make[k]) R0.make[k] = r.make[k]; });
       Object.keys(r.items).forEach(function(k){ var a = R0.items[k], b = r.items[k];
         if(!a || (b.q != null && (a.q == null || b.conf > a.conf))){ R0.items[k] = b; R0.raw[k] = r.raw[k]; }
         else if(a && b.q != null && a.q != null && a.q !== b.q && a.conf === b.conf && a.conf < 2) a.conflict = b.q; });
@@ -1036,7 +1080,7 @@ function runOCR(canvases){
   }).catch(function(e){ if(worker) try{ worker.terminate(); }catch(x){} var why = errText(e); status("❌ बिल वाचता आले नाही (" + esc(why) + ").<br>" + (/worker|security|insecure|denied|null/i.test(why) ? PREVIEW_MSG : "Internet तपासून परत प्रयत्न करा, किंवा \"कोरे MB\" वापरून हाताने भरा."), "err"); });
 }
 function showOCR(r, pages){
-  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["mark","Marking Code"],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"],["amt_s","रक्कम ₹ — Shadenet Structure (A+B)"],["amt_c","रक्कम ₹ — Irrigation (C)"],["amt_d","रक्कम ₹ — Fogging (D)"],["amt_e","रक्कम ₹ — Control Head (E)"],["amt_f","रक्कम ₹ — Optional (F)"],["amt_g","एकूण बिल ₹ (Grand Total)"]];
+  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["mark","Marking Code"],["reg","सेवा पुरवठादार नोंदणी क्र."],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"],["amt_s","रक्कम ₹ — Shadenet Structure (A+B)"],["amt_c","रक्कम ₹ — Irrigation (C)"],["amt_d","रक्कम ₹ — Fogging (D)"],["amt_e","रक्कम ₹ — Control Head (E)"],["amt_f","रक्कम ₹ — Optional (F)"],["amt_g","एकूण बिल ₹ (Grand Total)"]];
   $("ocrHead").innerHTML = HF.map(function(f){ return '<label class="l">' + f[1] + ' <input class="inp" data-h="' + f[0] + '" value="' + esc(h[f[0]] || "") + '"></label>'; }).join("");
   var found = 0, sure = 0;
   $("ocrRows").innerHTML = OKEYS.map(function(k){ var it = r.items[k] || { q:null, conf:0 }, c = it.q == null ? 0 : it.conf; if(it.q != null) found++; if(c === 2) sure++;
@@ -1048,10 +1092,11 @@ function showOCR(r, pages){
 }
 $("ocrImgs").onclick = function(e){ if(e.target.tagName === "IMG"){ var w = window.open(); if(w) w.document.write('<img src="' + e.target.src + '" style="width:100%">'); } };
 $("bOcrNo").onclick = function(){ $("cOcr").hidden = true; status(""); };
+window.__mbOcrTest = function(texts){ OCRR = OCRP.merge(texts); showOCR(OCRR, []); };   /* चाचणीसाठी */
 $("bOcrOk").onclick = function(){
   var d = { ocr:true, q:{}, amt:{} };
   document.querySelectorAll("#ocrHead [data-h]").forEach(function(x){ d[x.getAttribute("data-h")] = x.value.trim(); });
-  d.co = OCRR && OCRR.head.co || ""; d.tpl = "";
+  d.co = OCRR && OCRR.head.co || ""; d.tpl = ""; d.gi = OCRR && OCRR.head.gi || ""; d.make = OCRR && OCRR.make || {};
   ["s","c","d","e","f","g"].forEach(function(k){ var v = num(d["amt_" + k]); if(v) d.amt[k] = v; delete d["amt_" + k]; });
   document.querySelectorAll("#ocrRows [data-k]").forEach(function(x){ var v = parseFloat(String(x.value).replace(/,/g, "")); if(isFinite(v) && v > 0) d.q[x.getAttribute("data-k")] = v; });
   if(!d.area && d.w && d.l) d.area = String(Math.round(parseFloat(d.w) * parseFloat(d.l)));
