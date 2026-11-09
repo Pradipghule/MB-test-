@@ -12,6 +12,7 @@
   header.top{background:var(--g);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;position:sticky;top:0;z-index:20}
   .top-in{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
   .top h1{margin:0;font-size:18px;flex:1 1 220px}
+  .top .credit{margin-left:auto;text-align:right;font-size:10px;line-height:1.25;color:rgba(255,255,255,.85);white-space:nowrap}
   .top small{display:block;font-weight:400;font-size:12px;color:#cfe3d5}
   .btn{font:inherit;font-size:14px;border:1px solid #c4cec0;background:#fff;color:#1a1a1a;border-radius:9px;padding:9px 14px;cursor:pointer;min-height:42px}
   .btn.pri{background:var(--g2);border-color:var(--g2);color:#fff;font-weight:600}
@@ -46,12 +47,12 @@
 
   /* ---------- MB पाने (A4) ---------- */
   #doc{margin-top:12px}
-  .pg{background:#fff;width:210mm;max-width:100%;margin:0 auto 14px;padding:12mm 11mm;box-shadow:0 2px 12px rgba(0,0,0,.12);font-family:"Nirmala UI","Noto Sans Devanagari",Arial,sans-serif;font-size:12.5px;color:#111;overflow-x:auto}
+  .pg{background:#fff;width:210mm;height:297mm;overflow:hidden;margin:0 auto 14px;padding:12mm 11mm;box-shadow:0 2px 12px rgba(0,0,0,.12);font-family:"Nirmala UI","Noto Sans Devanagari",Arial,sans-serif;font-size:12.5px;color:#111}
   .pg .no{text-align:right;font-size:11px;color:#666}
   .pg h3{text-align:center;margin:0;font-size:17px}
   .pg h4{text-align:center;margin:2px 0 10px;font-size:15px}
   .pg h5{margin:12px 0 6px;font-size:13.5px}
-  .pg table{width:100%;border-collapse:collapse;min-width:640px}
+  .pg table{width:100%;border-collapse:collapse}
   .pg td,.pg th{border:1px solid #333;padding:4px 5px;vertical-align:middle}
   .pg th{font-weight:600;font-size:11.5px;background:#f4f4f4;text-align:center}
   .pg td.c{text-align:center}.pg td.k{width:23%;font-weight:600;font-size:12px}
@@ -69,7 +70,7 @@
   .sig td{height:16mm;vertical-align:bottom;text-align:center;font-size:12px}
   .cert p{margin:4px 0;line-height:1.7}
   .yn{display:inline-block;min-width:40px}
-  .pg table.sm{font-size:11px;min-width:600px}.pg table.sm td,.pg table.sm th{padding:2px 4px}
+  .pg table.sm{font-size:11px}.pg table.sm td,.pg table.sm th{padding:2px 4px}
   .pg table.sm th{font-size:10.5px}
   .pg table.in{min-width:0;margin-top:3px;font-size:10px}.pg table.in td,.pg table.in th{padding:1px 3px}
   .pg tr.sub td{font-size:10.5px}
@@ -85,6 +86,11 @@
   .pg .fx{display:inline-block;min-width:180px;border-bottom:1px dotted #777;color:#0b3d91;font-weight:600}
   .pg table.sig2{min-width:0;margin-top:12px}.pg table.sig2 td{border:0;width:50%;vertical-align:top;padding:8px 4px;line-height:1.6}
   .f.wfull{width:85%}
+  .pct{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f3f8f2;border:1px solid #cfe0cc;border-radius:12px;padding:10px 12px;margin-top:10px}
+  .pct label{font-size:15px;color:var(--g)}
+  .pct .inp{width:90px;font-size:18px;font-weight:700;text-align:center}
+  .pct .chips{display:flex;gap:6px;flex-wrap:wrap}.pct .chips .btn{min-width:58px;padding:8px 10px}
+  .pct .chips .btn.on{background:var(--g2);border-color:var(--g2);color:#fff;font-weight:700}
   td.lines .f.wfull{width:62%}
   td.lines table td .f{width:100%;border-bottom:0;text-align:left}
   @page{size:A4 portrait;margin:0}
@@ -93,14 +99,16 @@
     header.top,main>.card,.noprint{display:none !important}
     main{padding:0;max-width:none}
     #doc{margin:0}
-    .pg{box-shadow:none;margin:0;width:210mm;height:297mm;overflow:hidden;page-break-after:always}
+    .pg{box-shadow:none;margin:0;width:210mm;height:297mm;overflow:hidden;page-break-after:always;zoom:1 !important}
+    #zoomBtn{display:none !important}
     .pg table{min-width:0}
     .f{border-bottom:1px dotted #999;color:#000}
     td .f{border:0}
     .f.diff{background:none}
     .f::placeholder{color:transparent}
   }
-  @media (max-width:640px){ .pg{padding:8mm 4mm;font-size:12px} }
+  #doc{overflow:hidden}
+  #zoomBtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;border-radius:30px;box-shadow:0 3px 12px rgba(0,0,0,.25);background:var(--g2);color:#fff;border-color:var(--g2);font-weight:600}
 </style>
 </head>
 <body>
@@ -109,6 +117,7 @@
   <button type="button" class="btn" id="bLoad">📥 नवीन बिल</button>
   <button type="button" class="btn" id="bList">📋 जतन केलेले</button>
   <button type="button" class="btn" id="bPrint" hidden>🖨 Print / PDF</button>
+  <span class="credit">Developed by<br>Mr. Pradip Ghule Patil.</span>
 </div></header>
 
 <main>
@@ -165,15 +174,22 @@
   <section class="card noprint" id="cInfo" hidden>
     <div class="alert ok" id="srcInfo"></div>
     <p class="hint">निळ्या अक्षरातील सर्व माहिती बदलता येते. <b>"प्रत्यक्ष मोजमापाप्रमाणे"</b> रकान्यात बिलातील परिमाण आधीच भरले आहे — मोजमाप वेगळे आल्यास बदला (पिवळे दिसेल).</p>
+    <div class="pct">
+      <label for="pctTop"><b>अनुदान टक्के (%)</b></label>
+      <input class="inp" id="pctTop" inputmode="decimal" placeholder="%" aria-label="अनुदान टक्के">
+      <span class="chips"><button type="button" class="btn" data-p="50">50%</button><button type="button" class="btn" data-p="75">75%</button><button type="button" class="btn" data-p="80">80%</button><button type="button" class="btn" data-p="90">90%</button></span>
+      <small class="hint" style="margin:0;flex-basis:100%">इथे निवडले की प्रपत्र ६ क व ९ इ मधील अनुदान रक्कम व अक्षरी रक्कम आपोआप भरते.</small>
+    </div>
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn pri" id="bSave">💾 जतन करा</button>
       <button type="button" class="btn pri" id="bPrint2">🖨 Print / PDF</button>
-      <button type="button" class="btn" id="bCalc">🧮 अनुदान हिशोब भरा (ऐच्छिक)</button>
+      <button type="button" class="btn" id="bCalc">🧮 अनुदान हिशोब पुन्हा करा</button>
     </div>
-    <p class="hint">एकूण १७ पाने: प्रपत्र ५ ब — प्रथम मोका तपासणी (पान १–४) · प्रपत्र ६ क — अंतिम मोका तपासणी व अनुदान परिगणना (पान ५–१०) · प्रपत्र ९ क (पान ११–१२) · प्रपत्र ९ इ (पान १३–१७). अनुदानाचा हिशोब आपोआप होत नाही — हवा असल्यास "🧮" दाबा; Cost Norm व अनुदान टक्के आधी भरा.</p>
+    <p class="hint">एकूण १७ पाने: प्रपत्र ५ ब — प्रथम मोका तपासणी (पान १–४) · प्रपत्र ६ क — अंतिम मोका तपासणी व अनुदान परिगणना (पान ५–१०) · प्रपत्र ९ क (पान ११–१२) · प्रपत्र ९ इ (पान १३–१७). अनुदान: "Amount As per Bill", Cost Norm व टक्के भरताच पुढचा हिशोब आपोआप भरतो (सर्व आकडे बदलता येतात).</p>
   </section>
 
   <div id="doc"></div>
+  <button type="button" class="btn" id="zoomBtn" hidden>🔍 मोठे करा</button>
 </main>
 
 <script>
@@ -219,7 +235,7 @@ function blankMB(){
   var m = { id:"MB" + Date.now().toString(36), at:new Date().toISOString(), src:null,
     ben:{ name:"", vil:"", tal:"", dist:"", gat:"", mobile:"", cat:"", lat:"", lng:"" },
     bab:{ type:"", area:"", grid:"", l:"", w:"", h:"" }, scheme:"", pre:{ no:"", date:"", area:"" }, firstDate:"", preDate:"",
-    khadda:{ a:"0.30", b:"0.45", c:"0.75" }, r9a:{}, ch:{}, opt:{}, rep:"", an:{ pct:"50" }, f5:{}, f6:{} };
+    khadda:{ a:"0.30", b:"0.45", c:"0.75" }, r9a:{}, ch:{}, opt:{}, rep:"", an:{}, f5:{}, f6:{} };
   R9A.forEach(function(r){ m.r9a[r[0]] = { u:r[2], g:r[3], s:r[3], bill:"", act:"" }; });
   RCH.concat(RIR, RFG).forEach(function(r){ m.ch[r[0]] = { u:r[2], s:"", act:"" }; });
   ROP.forEach(function(r){ m.opt[r[0]] = { u:r[2], guide:"", inv:"", yn:"" }; });
@@ -288,7 +304,7 @@ function sigBlock(){
     '<table class="sig" style="margin-top:6px"><tr><th>मोजमाप घेतले</th><th>तांत्रिक निकष व मोजमाप पडताळणी केली</th><th>तांत्रिक निकष व मोजमाप पडताळणी प्रमाणित केली व अनुदान परिगणन करुन शिफारस केली</th></tr>' +
     "<tr><td>सहाय्यक कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.sak || off().sak) + "<br><br>दिनांकित स्वाक्षरी ..............</td><td>मंडळ कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.mak || off().mak) + "<br><br>दिनांकित स्वाक्षरी ..............</td><td>उपविभागीय कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.uak || off().uak) + "<br><br>दिनांकित स्वाक्षरी ..............</td></tr></table>";
 }
-function mig(m){ if(!m) return m; m.an = m.an || { pct:"50" }; m.f5 = m.f5 || {}; m.f6 = m.f6 || {}; if(!m.firstDate && m.preDate) m.firstDate = m.preDate; return m; }
+function mig(m){ if(!m) return m; m.an = m.an || {}; m.f5 = m.f5 || {}; m.f6 = m.f6 || {}; if(!m.firstDate && m.preDate) m.firstDate = m.preDate; return m; }
 function off(){ return LS("mb_off") || { sak:"", mak:"", uak:"" }; }
 function rowsA(from, to){
   return R9A.slice(from, to).map(function(r, i){
@@ -454,7 +470,7 @@ function pages6k(){
     "<br>२०. मार्गदर्शक सूचनेत उपरोक्त आकारमानासाठी शिफारस केलेला उच्चतम प्रती चौ.मी. दर रु. " + F("an.D", "w80") + " (ड)" +
     "<br>२१. उपरोक्त 'क' व 'ड' पैकी कमी असलेला प्रती चौ.मी. दर रु. " + F("an.I", "w80") + " (इ)" +
     "<br>२२. अर्थसहाय्यासाठी पात्र खर्च रक्कम (२१ येथील प्रती चौ.मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) रु. " + F("an.Ph", "w140") + " (फ)</div>" + pmFoot() + "</div>";
-  var Fp = '<div class="pg"><div class="lines">२३. फ प्रमाणे उभारणी खर्च ग्राह्य धरून अर्थसहाय्य (' + F("an.pct", "w40") + " टक्के) रक्कम रु. " + F("an.sub", "w140") + "<br>अक्षरी (" + F("an.words", "wfull") + ")<br>मंजूर करण्याची शिफारस करण्यात येत आहे.</div>" +
+  var Fp = '<div class="pg"><div class="lines">२३. फ प्रमाणे उभारणी खर्च ग्राह्य धरून अर्थसहाय्य (' + F("an.pct", "w40", "उदा. 50") + " टक्के) रक्कम रु. " + F("an.sub", "w140") + "<br>अक्षरी (" + F("an.words", "wfull") + ")<br>मंजूर करण्याची शिफारस करण्यात येत आहे.</div>" +
     '<p class="pp">२४. वरील प्रमाणे सर्व तांत्रिक निकषांची पुर्तता करत आहे. तसेच या शेडनेटगृहामध्ये लाभार्थ्याने ' + F("f6.crop", "w140", "पीक") + " पीक लागवडीसाठी गादी वाफे तयार करणे, ठिबक सिंचन / मायक्रो / मिनी / इन्व्हर्टेड स्प्रिंकलर, फॉगिंग यंत्रणा व कंट्रोल हेड संचाची जोडणी पूर्ण केली असून सदर यंत्रणा कार्यान्वित केली असल्याची खात्री केली आहे.</p>" +
     '<table class="sig2" style="margin-top:20px"><tr><td>' + FV(M.ben.name) + "<br>लाभार्थ्याचे नाव व स्वाक्षरी</td><td><br>नोंदणीकृत सेवा पुरवठादाराचे नाव व स्वाक्षरी</td></tr>" +
     "<tr><td>मंडळ कृषि अधिकारी<br>श्री. " + FV(get("f6.mak") || o.mak) + "<br><br>(दिनांकित स्वाक्षरी)</td><td>उपविभागीय कृषि अधिकारी<br>श्री. " + FV(get("f6.uak") || o.uak) + "<br><br>(दिनांकित स्वाक्षरी)</td></tr></table>" +
@@ -469,12 +485,12 @@ function page9eAn(){
     "<br>११. मार्गदर्शक सूचनेत उपरोक्त आकारमानासाठी शिफारस केलेला प्रती चौ.मी. दर रु. " + F("an.D", "w80") + " (ड)" +
     "<br>१२. उपरोक्त 'क' व 'ड' पैकी कमी असलेला प्रती चौ. मी. दर रु. " + F("an.I", "w80") + " (इ)" +
     "<br>१३. अर्थसहाय्यासाठी पात्र खर्च रक्कम (१२ येथील प्रती चौ. मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) = रु. " + F("an.Ph", "w140") + " (फ)" +
-    "<br>१४. फ प्रमाणे उभारणी खर्च ग्राह्य धरुन अर्थसहाय्य रक्कम (" + F("an.pct", "w40") + " टक्के) = रु. " + F("an.sub", "w140") +
+    "<br>१४. फ प्रमाणे उभारणी खर्च ग्राह्य धरुन अर्थसहाय्य रक्कम (" + F("an.pct", "w40", "उदा. 50") + " टक्के) = रु. " + F("an.sub", "w140") +
     "<br>&nbsp;&nbsp;&nbsp; उपरोक्तप्रमाणे रक्कम रु. " + F("an.sub", "w140") + " (अक्षरी) (" + F("an.words", "wfull") + ")<br>&nbsp;&nbsp;&nbsp; अर्थसहाय्य रक्कम अदायगीस मान्यता देण्यात येत आहे.</div>" + sigBlock() + "</div>";
 }
 
 /* ---------- 🧮 हिशोब (फक्त बटण दाबल्यावर) ---------- */
-function num(v){ var x = parseFloat(String(v == null ? "" : v).replace(/[,\s₹]/g, "")); return isFinite(x) ? x : null; }
+function num(v){ var x = parseFloat(String(v == null ? "" : v).replace(/[०-९]/g, function(c){ return "०१२३४५६७८९".indexOf(c); }).replace(/[,\s₹]/g, "")); return isFinite(x) ? x : null; }
 function inr(x, dec){ if(x == null || !isFinite(x)) return ""; return Number(x).toLocaleString("en-IN", { minimumFractionDigits:dec || 0, maximumFractionDigits:dec || 0 }); }
 var MR = "शून्य एक दोन तीन चार पाच सहा सात आठ नऊ दहा अकरा बारा तेरा चौदा पंधरा सोळा सतरा अठरा एकोणीस वीस एकवीस बावीस तेवीस चोवीस पंचवीस सव्वीस सत्तावीस अठ्ठावीस एकोणतीस तीस एकतीस बत्तीस तेहेतीस चौतीस पस्तीस छत्तीस सदतीस अडतीस एकोणचाळीस चाळीस एक्केचाळीस बेचाळीस त्रेचाळीस चव्वेचाळीस पंचेचाळीस सेहेचाळीस सत्तेचाळीस अठ्ठेचाळीस एकोणपन्नास पन्नास एक्कावन्न बावन्न त्रेपन्न चोपन्न पंचावन्न छप्पन्न सत्तावन्न अठ्ठावन्न एकोणसाठ साठ एकसष्ठ बासष्ठ त्रेसष्ठ चौसष्ठ पासष्ठ सहासष्ठ सदुसष्ठ अडुसष्ठ एकोणसत्तर सत्तर एक्काहत्तर बाहत्तर त्र्याहत्तर चौऱ्याहत्तर पंच्याहत्तर शहात्तर सत्याहत्तर अठ्ठ्याहत्तर एकोणऐंशी ऐंशी एक्याऐंशी ब्याऐंशी त्र्याऐंशी चौऱ्याऐंशी पंच्याऐंशी शहाऐंशी सत्त्याऐंशी अठ्ठ्याऐंशी एकोणनव्वद नव्वद एक्याण्णव ब्याण्णव त्र्याण्णव चौऱ्याण्णव पंच्याण्णव शहाण्णव सत्त्याण्णव अठ्ठ्याण्णव नव्व्याण्णव".split(" ");
 function mrWords(n){
@@ -484,32 +500,39 @@ function mrWords(n){
   if(n) out.push(MR[n]);
   return out.join(" ");
 }
-function calcAn(){
+function calcAn(quiet, editing){
   var area = num(M.bab.area), an = M.an = M.an || {}, keys = ["s","c","d","e","f"], tot = { amt:0, nAmt:0, rec:0 }, normSum = 0, any = 0;
-  function row(r){
+  function put(path, v){ if(path === editing || v == null || v === "") return; set(path, v); }
+  function row(r, base){
     var amt = num(r.amt), norm = num(r.norm), nA = norm != null && area ? Math.round(norm * area) : num(r.nAmt);
-    if(norm != null) r.nAmt = inr(nA);
+    if(norm != null && area) put(base + "nAmt", inr(nA));
     var rec = amt != null && nA != null ? Math.min(amt, nA) : (amt != null ? amt : nA);
-    if(rec != null) r.rec = inr(rec);
+    if(rec != null) put(base + "rec", inr(rec));
     return { amt:amt, nA:nA, rec:rec, norm:norm };
   }
   keys.forEach(function(k){
-    var r = an[k] = an[k] || {};
-    if(k === "f"){ var s = 0, has = 0; for(var j = 1; j <= ANO.length; j++){ var o = r["o" + j]; if(o){ var x = row(o); if(x.amt != null){ s += x.amt; has = 1; } } } if(has && num(r.amt) == null) r.amt = inr(s); }
-    var v = row(r); if(v.amt != null){ tot.amt += v.amt; any = 1; } if(v.nA != null) tot.nAmt += v.nA; if(v.rec != null) tot.rec += v.rec; if(v.norm != null) normSum += v.norm;
+    var r = an[k] = an[k] || {}, base = "an." + k + ".";
+    if(k === "f"){ var sm = 0, has = 0; for(var j = 1; j <= ANO.length; j++){ var o = r["o" + j]; if(o){ var x = row(o, base + "o" + j + "."); if(x.amt != null){ sm += x.amt; has = 1; } } } if(has) put(base + "amt", inr(sm)); }
+    var v = row(r, base); if(v.amt != null){ tot.amt += v.amt; any = 1; } if(v.nA != null) tot.nAmt += v.nA; if(v.rec != null) tot.rec += v.rec; if(v.norm != null) normSum += v.norm;
   });
-  if(!any){ status("🧮 हिशोबासाठी आधी \"Amount As per Bill\" भरा.", "warn"); return; }
-  an.tot = { amt:inr(tot.amt), nAmt:tot.nAmt ? inr(tot.nAmt) : "", rec:inr(tot.rec) };
-  an.B = inr(tot.amt);
-  var K = area ? tot.amt / area : null; if(K != null) an.K = inr(K, 2);
-  if(normSum) an.D = inr(normSum, 2);
-  var D = num(an.D), I = K != null && D != null ? Math.min(K, D) : (K != null ? K : D);
-  if(I != null) an.I = inr(I, 2);
-  if(D != null && area) an.A = inr(Math.round(D * area));
-  if(I != null && area){ var Ph = Math.round(I * area); an.Ph = inr(Ph);
-    var pct = num(an.pct) || 50; an.pct = String(pct); var sub = Math.round(Ph * pct / 100); an.sub = inr(sub); an.words = mrWords(sub) + " रुपये मात्र"; }
+  if(any){ put("an.tot.amt", inr(tot.amt)); if(tot.nAmt) put("an.tot.nAmt", inr(tot.nAmt)); put("an.tot.rec", inr(tot.rec)); put("an.B", inr(tot.amt)); }
+  var B = any ? tot.amt : num(an.B);
+  var K = B != null && area ? B / area : null; if(K != null) put("an.K", inr(K, 2));
+  if(normSum) put("an.D", inr(normSum, 2));
+  var D = normSum || num(an.D), I = K != null && D != null ? Math.min(K, D) : (K != null ? K : D);
+  if(I != null) put("an.I", inr(I, 2));
+  if(D != null && area) put("an.A", inr(Math.round(D * area)));
+  var Ph = I != null && area ? Math.round(I * area) : num(an.Ph); if(I != null && area) put("an.Ph", inr(Ph));
+  var pct = num(an.pct);
+  if(Ph != null && pct != null){ var sub = Math.round(Ph * pct / 100); put("an.sub", inr(sub)); put("an.words", mrWords(sub) + " रुपये मात्र"); }
+  if(quiet){ syncAn(editing); draft(); return; }
   render(); draft();
-  status("🧮 हिशोब भरला — सर्व आकडे तपासा (बदलता येतात). Cost Norm रिकामे असल्यास \"Amount As per Cost Norms\" आपोआप येत नाही.", "ok");
+  if(B == null) status("🧮 हिशोबासाठी आधी \"Amount As per Bill\" (बिलातील रक्कम) भरा — QR नसलेल्या बिलात रक्कम आपोआप येत नाही.", "warn");
+  else status("🧮 हिशोब भरला — सर्व आकडे तपासा (बदलता येतात).", "ok");
+}
+/* हिशोबाचे रकाने पुन्हा दाखवा (लिहीत असलेला रकाना सोडून) */
+function syncAn(editing){
+  document.querySelectorAll('[data-f^="an."]').forEach(function(x){ var f = x.getAttribute("data-f"); if(f === editing || x === document.activeElement) return; var v = get(f); x.value = v == null ? "" : v; });
 }
 
 function render(){
@@ -548,6 +571,7 @@ function render(){
     "<p>२) उभारणी केलेल्या शेडनेटगृहासाठी वापरलेले जीआय पाईप, क्लॅडिंग मटेरियल इ. साहित्याचे तांत्रिक निकष व परिमाण हे मार्गदर्शक सूचनेतील विहित निकष परिमाणाची पुर्तता करतात याची खात्री केली आहे.</p>" +
     "<p>३) वरीलप्रमाणे सर्व साहित्याचे तांत्रिक निकष व परिमाण याची पडताळणी करुन त्याच्या नोंदी मापनपुस्तिकेत नोंदविलेल्या आहेत.</p></div>" + sigBlock() + "</div>";
   var all = pages5b().concat(pages6k(), [P1, P2, P3, P4, P5, page9eAn(), P7]);
+  setTimeout(pctUi, 0); setTimeout(fitPages, 0);
   $("doc").innerHTML = all.map(function(h, i){ return h.replace('<div class="pg">', '<div class="pg"><div class="no">पान ' + (i + 1) + " / " + all.length + "</div>"); }).join("");
 }
 /* बदल → data (एकाच नावाचे सर्व रकाने एकत्र बदलतात, उदा. नाव पान १ व ३) */
@@ -558,6 +582,8 @@ function onField(e){
   document.querySelectorAll('[data-f="' + f + '"]').forEach(function(x){ if(x !== e.target) x.value = e.target.value; });
   var m = /^(r9a|ch)\.([a-z]+)\.act$/.exec(f);
   if(m){ var base = m[1] === "r9a" ? M.r9a[m[2]].bill : M.ch[m[2]].s; e.target.classList.toggle("diff", base !== "" && e.target.value !== base); }
+  /* अनुदान: आकडा टाकताच पुढचा हिशोब आपोआप */
+  if(/^an\.(?!billNo|inv|words)/.test(f) || f === "bab.area"){ calcAn(true, f); if(f === "an.pct") pctUi(); return; }
   draft();
 }
 $("doc").addEventListener("input", onField); $("doc").addEventListener("change", function(e){ if(e.target.tagName === "SELECT") onField(e); });
@@ -731,6 +757,14 @@ var OCRP = (function(){
     if((m = /Invoice\s*Date\s*[:;]?\s*(\d{1,2})[-\/ ]([A-Za-z]{3}|\d{1,2})[-\/ ](\d{4})/i.exec(t))){
       var MO = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 }, mo = isNaN(+m[2]) ? MO[m[2].toLowerCase()] : +m[2];
       if(mo) h.date = m[3] + "-" + String(mo).padStart(2, "0") + "-" + String(m[1]).padStart(2, "0"); }
+    /* भागनिहाय एकूण रक्कम: "A) MATERIAL COST — Total 15,74,549.28" … व Grand Total */
+    var st = {}, re = /(?:^|\n)\W{0,3}([A-F])\s*\)[^\n]*?Total\W*([\d,]+\.\d{1,2})/gi, x;
+    while((x = re.exec(t))){ var L = x[1].toUpperCase(); if(st[L] == null) st[L] = parseFloat(x[2].replace(/,/g, "")); }
+    var gt = /Grand\s*Total\D{0,6}([\d,]+\.\d{1,2})/i.exec(t); gt = gt ? parseFloat(gt[1].replace(/,/g, "")) : null;
+    if(st.F == null && gt && st.A != null && st.B != null && st.C != null && st.D != null && st.E != null){ var f = gt - st.A - st.B - st.C - st.D - st.E; if(f > 0.5) st.F = f; }
+    var R = function(v){ return v == null ? "" : String(Math.round(v)); };
+    if(st.A != null || st.B != null) h.amt_s = R((st.A || 0) + (st.B || 0));
+    if(st.C != null) h.amt_c = R(st.C); if(st.D != null) h.amt_d = R(st.D); if(st.E != null) h.amt_e = R(st.E); if(st.F != null) h.amt_f = R(st.F);
     return h;
   }
   function parse(text){
@@ -816,7 +850,7 @@ function runOCR(canvases){
   }).catch(function(e){ if(worker) try{ worker.terminate(); }catch(x){} var why = errText(e); status("❌ बिल वाचता आले नाही (" + esc(why) + ").<br>" + (/worker|security|insecure|denied|null/i.test(why) ? PREVIEW_MSG : "Internet तपासून परत प्रयत्न करा, किंवा \"कोरे MB\" वापरून हाताने भरा."), "err"); });
 }
 function showOCR(r, pages){
-  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"]];
+  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"],["amt_s","रक्कम ₹ — Shadenet Structure (A+B)"],["amt_c","रक्कम ₹ — Irrigation (C)"],["amt_d","रक्कम ₹ — Fogging (D)"],["amt_e","रक्कम ₹ — Control Head (E)"],["amt_f","रक्कम ₹ — Optional (F)"]];
   $("ocrHead").innerHTML = HF.map(function(f){ return '<label class="l">' + f[1] + ' <input class="inp" data-h="' + f[0] + '" value="' + esc(h[f[0]] || "") + '"></label>'; }).join("");
   var found = 0, sure = 0;
   $("ocrRows").innerHTML = OKEYS.map(function(k){ var it = r.items[k] || { q:null, conf:0 }, c = it.q == null ? 0 : it.conf; if(it.q != null) found++; if(c === 2) sure++;
@@ -832,6 +866,7 @@ $("bOcrOk").onclick = function(){
   var d = { ocr:true, q:{}, amt:{} };
   document.querySelectorAll("#ocrHead [data-h]").forEach(function(x){ d[x.getAttribute("data-h")] = x.value.trim(); });
   d.co = OCRR && OCRR.head.co || ""; d.tpl = "";
+  ["s","c","d","e","f"].forEach(function(k){ var v = num(d["amt_" + k]); if(v) d.amt[k] = v; delete d["amt_" + k]; });
   document.querySelectorAll("#ocrRows [data-k]").forEach(function(x){ var v = parseFloat(String(x.value).replace(/,/g, "")); if(isFinite(v) && v > 0) d.q[x.getAttribute("data-k")] = v; });
   if(!d.area && d.w && d.l) d.area = String(Math.round(parseFloat(d.w) * parseFloat(d.l)));
   M = fromQR(d); render(); $("cOcr").hidden = true;
@@ -847,6 +882,27 @@ function save(){
 }
 $("bSave").onclick = save;
 $("bCalc").onclick = function(){ if(M) calcAn(); };
+/* A4 पान पूर्ण स्क्रीनमध्ये (फोनवर लहान करून) — "मोठे करा" ने खरी साईझ */
+var BIG = false;
+function fitPages(){
+  var pgs = document.querySelectorAll("#doc .pg"); if(!pgs.length){ $("zoomBtn").hidden = true; return; }
+  var pw = pgs[0].offsetWidth || 794, w = $("doc").clientWidth, z = BIG ? 1 : Math.min(1, w / pw);
+  pgs.forEach(function(p){ p.style.zoom = z < 0.999 ? String(Math.floor(z * 1000) / 1000) : ""; });
+  $("zoomBtn").hidden = !BIG && z >= 0.999;
+  $("zoomBtn").textContent = BIG ? "📄 पूर्ण पान" : "🔍 मोठे करा";
+  $("doc").style.overflowX = BIG ? "auto" : "hidden";
+}
+$("zoomBtn").onclick = function(){
+  var pgs = [].slice.call(document.querySelectorAll("#doc .pg")), top = 0, mid = window.innerHeight / 2, cur = pgs[0];
+  pgs.forEach(function(p){ var r = p.getBoundingClientRect(); if(r.top <= mid) cur = p; });
+  BIG = !BIG; fitPages(); if(cur) cur.scrollIntoView({ block:"start" });
+};
+window.addEventListener("resize", function(){ clearTimeout(window.__fz); window.__fz = setTimeout(fitPages, 150); });
+function setPct(v){ if(!M) return; M.an = M.an || {}; M.an.pct = v; calcAn(true); pctUi(); }
+function pctUi(){ var v = M && M.an ? String(M.an.pct || "") : ""; if(document.activeElement !== $("pctTop")) $("pctTop").value = v;
+  var n = num(v); document.querySelectorAll(".pct [data-p]").forEach(function(b){ b.classList.toggle("on", n != null && Number(b.getAttribute("data-p")) === n); }); }
+$("pctTop").oninput = function(){ setPct(this.value.trim()); };
+document.querySelectorAll(".pct [data-p]").forEach(function(b){ b.onclick = function(){ $("pctTop").value = b.getAttribute("data-p"); setPct(b.getAttribute("data-p")); }; });
 function renderList(){
   var q = $("q").value.trim().toLowerCase(), L = (LS("mb_list") || []).filter(function(x){ return !q || [x.ben.name, x.ben.vil, x.src && x.src.no].join(" ").toLowerCase().indexOf(q) >= 0; });
   $("list").innerHTML = L.length ? L.map(function(x){ return '<div class="it"><div class="m"><b>' + esc(x.ben.name || "(नाव नाही)") + "</b><small>" + esc(x.ben.vil || "") + (x.src ? " · Invoice " + esc(x.src.no) + " · " + esc(x.src.coName) : " · हाताने") + " · " + esc(x.bab.type || "") + " " + esc(x.bab.area || "") + " चौ.मी. · जतन " + new Date(x.at).toLocaleDateString("en-IN") + '</small></div><button type="button" class="btn" data-o="' + esc(x.id) + '">उघडा</button><button type="button" class="btn" data-d="' + esc(x.id) + '" aria-label="काढा" style="color:#a3321c">🗑</button></div>'; }).join("") : '<p class="hint">अजून काही जतन केलेले नाही.</p>';
