@@ -93,14 +93,18 @@
   .pct .chips .btn.on{background:var(--g2);border-color:var(--g2);color:#fff;font-weight:700}
   td.lines .f.wfull{width:62%}
   td.lines table td .f{width:100%;border-bottom:0;text-align:left}
-  @page{size:A4 portrait;margin:0}
+  @page{size:A4 portrait;margin:8mm 9mm}
   @media print{
     body{background:#fff}
     header.top,main>.card,.noprint{display:none !important}
     main{padding:0;max-width:none}
     #doc{margin:0}
-    .pg{box-shadow:none;margin:0;width:210mm;height:297mm;overflow:hidden;page-break-after:always;zoom:1 !important}
+    .pg{box-shadow:none;margin:0 !important;width:auto !important;height:auto !important;padding:0 !important;overflow:visible !important;page-break-after:always;break-after:page;zoom:1 !important}
+    .pgw:last-child .pg{page-break-after:auto;break-after:auto}
+    .pg tr,.pg .q,.pg .sig2,.pg table.sig{page-break-inside:avoid;break-inside:avoid}
     #zoomBtn{display:none !important}
+    .pgw{width:auto !important;height:auto !important;margin:0 !important;box-shadow:none !important;overflow:visible !important}
+    .pgw .pg{transform:none !important}
     .pg table{min-width:0}
     .f{border-bottom:1px dotted #999;color:#000}
     td .f{border:0}
@@ -108,6 +112,8 @@
     .f::placeholder{color:transparent}
   }
   #doc{overflow:hidden}
+  .pgw{margin:0 auto 14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+  .pgw .pg{transform-origin:0 0;margin:0;box-shadow:none}
   #zoomBtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;border-radius:30px;box-shadow:0 3px 12px rgba(0,0,0,.25);background:var(--g2);color:#fff;border-color:var(--g2);font-weight:600}
 </style>
 </head>
@@ -185,7 +191,7 @@
       <button type="button" class="btn pri" id="bPrint2">🖨 Print / PDF</button>
       <button type="button" class="btn" id="bCalc">🧮 अनुदान हिशोब पुन्हा करा</button>
     </div>
-    <p class="hint">एकूण १७ पाने: प्रपत्र ५ ब — प्रथम मोका तपासणी (पान १–४) · प्रपत्र ६ क — अंतिम मोका तपासणी व अनुदान परिगणना (पान ५–१०) · प्रपत्र ९ क (पान ११–१२) · प्रपत्र ९ इ (पान १३–१७). अनुदान: "Amount As per Bill", Cost Norm व टक्के भरताच पुढचा हिशोब आपोआप भरतो (सर्व आकडे बदलता येतात).</p>
+    <p class="hint">एकूण १७ पाने: प्रपत्र ५ ब — प्रथम मोका तपासणी (पान १–४) · प्रपत्र ६ क — अंतिम मोका तपासणी व अनुदान परिगणना (पान ५–१०) · प्रपत्र ९ क (पान ११–१२) · प्रपत्र ९ इ (पान १३–१७). अनुदान: "Amount As per Bill", Cost Norm व टक्के भरताच पुढचा हिशोब आपोआप भरतो (सर्व आकडे बदलता येतात). एखाद्या प्रकार + क्षेत्रफळासाठी Cost Norm एकदा भरले की पुढच्या MB मध्ये ते आपोआप येतात व "ड" भरतो.</p>
   </section>
 
   <div id="doc"></div>
@@ -500,6 +506,14 @@ function mrWords(n){
   if(n) out.push(MR[n]);
   return out.join(" ");
 }
+/* मार्गदर्शक दर (Cost Norm) — प्रकार + क्षेत्रफळ नुसार लक्षात ठेवतो; पहिला नमुना: FTSNH 4000 (तुमच्या MB प्रमाणे) */
+var NORM0 = { "FTSNH|4000":{ s:"653", c:"24", d:"37", e:"42", f:"44.9" } };
+function normKey(m){ var a = num(m.bab.area); return String(m.bab.type || "").trim().toUpperCase() + "|" + (a == null ? "" : Math.round(a)); }
+function normGet(m){ var all = LS("mb_norm") || {}, k = normKey(m); return all[k] || NORM0[k] || null; }
+function normSave(){ if(!M || !M.an) return; var o = {}, has = 0; ["s","c","d","e","f"].forEach(function(k){ var v = M.an[k] && M.an[k].norm; if(v !== undefined && v !== ""){ o[k] = v; has = 1; } });
+  if(!has) return; var all = LS("mb_norm") || {}; all[normKey(M)] = o; LS("mb_norm", all); }
+function normApply(m){ var n = normGet(m); if(!n) return false; m.an = m.an || {}; var did = false;
+  ["s","c","d","e","f"].forEach(function(k){ m.an[k] = m.an[k] || {}; if(!m.an[k].norm && n[k]){ m.an[k].norm = n[k]; did = true; } }); return did; }
 function calcAn(quiet, editing){
   var area = num(M.bab.area), an = M.an = M.an || {}, keys = ["s","c","d","e","f"], tot = { amt:0, nAmt:0, rec:0 }, normSum = 0, any = 0;
   function put(path, v){ if(path === editing || v == null || v === "") return; set(path, v); }
@@ -583,6 +597,7 @@ function onField(e){
   var m = /^(r9a|ch)\.([a-z]+)\.act$/.exec(f);
   if(m){ var base = m[1] === "r9a" ? M.r9a[m[2]].bill : M.ch[m[2]].s; e.target.classList.toggle("diff", base !== "" && e.target.value !== base); }
   /* अनुदान: आकडा टाकताच पुढचा हिशोब आपोआप */
+  if(/^an\.[scdef]\.norm$/.test(f)) normSave();
   if(/^an\.(?!billNo|inv|words)/.test(f) || f === "bab.area"){ calcAn(true, f); if(f === "an.pct") pctUi(); return; }
   draft();
 }
@@ -659,8 +674,8 @@ function openQR(t, how){
   var d = parseQR(t); if(!d){ status("❌ हा QR MB चा नाही किंवा अपूर्ण आहे.", "err"); return false; }
   var L = LS("mb_list") || [], ex = L.filter(function(x){ return x.src && x.src.no === d.no && x.src.co === d.co; })[0];
   if(ex && confirm("Invoice " + d.no + " (" + d.name + ") चे MB आधीच जतन आहे.\n\nOK = तेच उघडा (तुमचे बदल सोबत)\nCancel = बिलावरून नवीन भरा")){ M = mig(ex); }
-  else M = fromQR(d);
-  render(); status("✔ QR वाचला — " + esc(d.name) + " · " + esc(d.vil) + " · Invoice " + esc(d.no) + ". खाली MB भरले आहे.", "ok");
+  else { M = fromQR(d); normApply(M); }
+  render(); calcAn(true); status("✔ QR वाचला — " + esc(d.name) + " · " + esc(d.vil) + " · Invoice " + esc(d.no) + ". खाली MB भरले आहे.", "ok");
   setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
   return true;
 }
@@ -869,7 +884,7 @@ $("bOcrOk").onclick = function(){
   ["s","c","d","e","f"].forEach(function(k){ var v = num(d["amt_" + k]); if(v) d.amt[k] = v; delete d["amt_" + k]; });
   document.querySelectorAll("#ocrRows [data-k]").forEach(function(x){ var v = parseFloat(String(x.value).replace(/,/g, "")); if(isFinite(v) && v > 0) d.q[x.getAttribute("data-k")] = v; });
   if(!d.area && d.w && d.l) d.area = String(Math.round(parseFloat(d.w) * parseFloat(d.l)));
-  M = fromQR(d); render(); $("cOcr").hidden = true;
+  M = fromQR(d); normApply(M); render(); calcAn(true); $("cOcr").hidden = true;
   status("✔ तपासलेली माहिती MB मध्ये भरली — " + esc(d.name || "") + ". प्रत्यक्ष मोजमाप तपासा.", "ok");
   setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
 };
@@ -886,8 +901,11 @@ $("bCalc").onclick = function(){ if(M) calcAn(); };
 var BIG = false;
 function fitPages(){
   var pgs = document.querySelectorAll("#doc .pg"); if(!pgs.length){ $("zoomBtn").hidden = true; return; }
-  var pw = pgs[0].offsetWidth || 794, w = $("doc").clientWidth, z = BIG ? 1 : Math.min(1, w / pw);
-  pgs.forEach(function(p){ p.style.zoom = z < 0.999 ? String(Math.floor(z * 1000) / 1000) : ""; });
+  var w = $("doc").clientWidth, PW = 793.7, PH = 1122.5, z = BIG ? 1 : Math.min(1, w / PW);
+  pgs.forEach(function(p){
+    var wr = p.parentNode; if(!wr.classList.contains("pgw")){ wr = document.createElement("div"); wr.className = "pgw"; p.parentNode.insertBefore(wr, p); wr.appendChild(p); }
+    p.style.transform = z < 0.999 ? "scale(" + z + ")" : ""; wr.style.width = (PW * z) + "px"; wr.style.height = (PH * z) + "px";
+  });
   $("zoomBtn").hidden = !BIG && z >= 0.999;
   $("zoomBtn").textContent = BIG ? "📄 पूर्ण पान" : "🔍 मोठे करा";
   $("doc").style.overflowX = BIG ? "auto" : "hidden";
