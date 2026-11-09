@@ -69,6 +69,24 @@
   .sig td{height:16mm;vertical-align:bottom;text-align:center;font-size:12px}
   .cert p{margin:4px 0;line-height:1.7}
   .yn{display:inline-block;min-width:40px}
+  .pg table.sm{font-size:11px;min-width:600px}.pg table.sm td,.pg table.sm th{padding:2px 4px}
+  .pg table.sm th{font-size:10.5px}
+  .pg table.in{min-width:0;margin-top:3px;font-size:10px}.pg table.in td,.pg table.in th{padding:1px 3px}
+  .pg tr.sub td{font-size:10.5px}
+  .pg td.vt{vertical-align:middle}.pg td.vt textarea.f{height:auto;min-height:6em;font-size:11px}
+  .pg .q{display:flex;gap:10px;align-items:flex-end;justify-content:space-between;margin:5px 0;line-height:1.5}
+  .pg .q span{flex:1}
+  select.f.yn{-webkit-appearance:none;appearance:none;min-height:0;padding:1px 3px;border:0;border-radius:0;background:transparent;width:auto;min-width:84px;text-align:center;text-align-last:center;border-bottom:1px dotted #777;cursor:pointer;font-size:12px}
+  td select.f.yn{width:100%;border-bottom:0;min-width:0}
+  .pg .pm{text-align:center;font-size:11px;margin-top:10px;color:#333;font-weight:600}
+  .pg .small,.pg .hint2{font-size:11px;margin:3px 0}
+  .pg .pp{margin:6px 0;line-height:1.6}
+  .pg ol.ol{margin:4px 0;padding-left:22px;line-height:1.55}
+  .pg .fx{display:inline-block;min-width:180px;border-bottom:1px dotted #777;color:#0b3d91;font-weight:600}
+  .pg table.sig2{min-width:0;margin-top:12px}.pg table.sig2 td{border:0;width:50%;vertical-align:top;padding:8px 4px;line-height:1.6}
+  .f.wfull{width:85%}
+  td.lines .f.wfull{width:62%}
+  td.lines table td .f{width:100%;border-bottom:0;text-align:left}
   @page{size:A4 portrait;margin:0}
   @media print{
     body{background:#fff}
@@ -150,7 +168,9 @@
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn pri" id="bSave">💾 जतन करा</button>
       <button type="button" class="btn pri" id="bPrint2">🖨 Print / PDF</button>
+      <button type="button" class="btn" id="bCalc">🧮 अनुदान हिशोब भरा (ऐच्छिक)</button>
     </div>
+    <p class="hint">एकूण १७ पाने: प्रपत्र ५ ब — प्रथम मोका तपासणी (पान १–४) · प्रपत्र ६ क — अंतिम मोका तपासणी व अनुदान परिगणना (पान ५–१०) · प्रपत्र ९ क (पान ११–१२) · प्रपत्र ९ इ (पान १३–१७). अनुदानाचा हिशोब आपोआप होत नाही — हवा असल्यास "🧮" दाबा; Cost Norm व अनुदान टक्के आधी भरा.</p>
   </section>
 
   <div id="doc"></div>
@@ -199,7 +219,7 @@ function blankMB(){
   var m = { id:"MB" + Date.now().toString(36), at:new Date().toISOString(), src:null,
     ben:{ name:"", vil:"", tal:"", dist:"", gat:"", mobile:"", cat:"", lat:"", lng:"" },
     bab:{ type:"", area:"", grid:"", l:"", w:"", h:"" }, scheme:"", pre:{ no:"", date:"", area:"" }, firstDate:"", preDate:"",
-    khadda:{ a:"0.30", b:"0.45", c:"0.75" }, r9a:{}, ch:{}, opt:{}, rep:"" };
+    khadda:{ a:"0.30", b:"0.45", c:"0.75" }, r9a:{}, ch:{}, opt:{}, rep:"", an:{ pct:"50" }, f5:{}, f6:{} };
   R9A.forEach(function(r){ m.r9a[r[0]] = { u:r[2], g:r[3], s:r[3], bill:"", act:"" }; });
   RCH.concat(RIR, RFG).forEach(function(r){ m.ch[r[0]] = { u:r[2], s:"", act:"" }; });
   ROP.forEach(function(r){ m.opt[r[0]] = { u:r[2], guide:"", inv:"", yn:"" }; });
@@ -229,7 +249,7 @@ function parseQR(text){
 }
 function decodeHash(h){ try{ return decodeURIComponent(String(h).replace(/\+/g, " ")); }catch(e){ return String(h); } }
 function fromQR(d){
-  var m = blankMB(), q = d.q;
+  var m = blankMB(), q = d.q; m.f6 = { st:{}, ch:{}, ir:{}, fg:{} };
   m.src = { co:d.co, coName:CO[d.co] || d.co || "", no:d.no, date:d.date, amt:d.amt, tpl:d.tpl, ocr:!!d.ocr };
   m.ben = { name:d.name, vil:d.vil, tal:d.tal, dist:d.dist, gat:d.gat, mobile:d.mobile, cat:"", lat:"", lng:"" };
   m.bab = { type:d.model, area:d.area, grid:"", l:d.l, w:d.w, h:d.h };
@@ -238,11 +258,22 @@ function fromQR(d){
   var chq = { bed:q.bed ? (q.bed >= 6 ? q.bed : q.bed * 6) : 0, disc:q.disc || q.scrn };
   RCH.concat(RIR, RFG).forEach(function(r){ var v = chq[r[0]] != null ? chq[r[0]] : q[r[0]]; if(v){ m.ch[r[0]].s = fmtQ(v); m.ch[r[0]].act = fmtQ(v); } });
   ROP.forEach(function(r){ var v = q[r[0]]; if(v){ m.opt[r[0]].inv = fmtQ(v); m.opt[r[0]].yn = "Yes"; } else { m.opt[r[0]].u = m.opt[r[0]].u ? m.opt[r[0]].u : "—"; } });
+  /* प्रपत्र ६ क — मार्गदर्शक / देयकानुसार परिमाण (बिलातील आकडे; अधिकारी बदलू शकतात) */
+  R9A.forEach(function(r){ var v = m.r9a[r[0]].bill; if(v){ m.f6.st[r[0]] = { g:v, yn:"Yes" }; } });
+  RCH.forEach(function(r){ var v = m.ch[r[0]].s; if(v) m.f6.ch[r[0]] = { g:v, i:v, yn:"Yes" }; });
+  RIR.forEach(function(r){ if(m.ch[r[0]].s) m.f6.ir[r[0]] = { sp:/drip/.test(r[0]) ? "Polytube" : /main|sub/.test(r[0]) ? "PVC" : "—", yn:"Yes" }; });
+  RFG.forEach(function(r){ if(m.ch[r[0]].s) m.f6.fg[r[0]] = { sp:r[0] === "flat" ? "Polytube" : /main|sub/.test(r[0]) ? "PVC" : "—", yn:"Yes" }; });
+  /* अनुदान — बिलातील रक्कम (हिशोब नाही) */
+  var A = d.amt || {}; ["s","c","d","e","f"].forEach(function(k){ if(A[k]) m.an[k] = { amt:Number(A[k]).toLocaleString("en-IN") }; });
+  if(d.no) m.an.billNo = d.no + (d.date ? " / " + dmy(d.date) : "");
+  m.an.inv = CO[d.co] || "";
+  /* पुरवठादाराची माहिती — याच कंपनीसाठी मागच्या वेळी भरलेली */
+  var sup = d.co && LS("mb_sup_" + d.co); m.f5.sup = sup && sup.sup || { name:CO[d.co] ? "मे. " + CO[d.co] : "" }; m.f5.cmp = sup && sup.cmp || {};
   return m;
 }
 
 /* ---------- पाने बनवा ---------- */
-function F(path, cls, ph){ var v = get(path); return '<input class="f ' + (cls || "") + '" data-f="' + path + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + ">"; }
+function F(path, cls, ph, dv){ var v = get(path); if((v === "" || v == null) && dv) v = dv; return '<input class="f ' + (cls || "") + '" data-f="' + path + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + ">"; }
 function T(path){ return '<textarea class="f" rows="2" data-f="' + path + '">' + esc(get(path)) + "</textarea>"; }
 function get(path){ return path.split(".").reduce(function(o, k){ return o == null ? "" : o[k]; }, M); }
 function set(path, v){ var a = path.split("."), o = M; for(var i = 0; i < a.length - 1; i++){ o = o[a[i]] = o[a[i]] || {}; } o[a[a.length - 1]] = v; }
@@ -257,6 +288,7 @@ function sigBlock(){
     '<table class="sig" style="margin-top:6px"><tr><th>मोजमाप घेतले</th><th>तांत्रिक निकष व मोजमाप पडताळणी केली</th><th>तांत्रिक निकष व मोजमाप पडताळणी प्रमाणित केली व अनुदान परिगणन करुन शिफारस केली</th></tr>' +
     "<tr><td>सहाय्यक कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.sak || off().sak) + "<br><br>दिनांकित स्वाक्षरी ..............</td><td>मंडळ कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.mak || off().mak) + "<br><br>दिनांकित स्वाक्षरी ..............</td><td>उपविभागीय कृषि अधिकारी<br>श्री. " + esc(M.sign && M.sign.uak || off().uak) + "<br><br>दिनांकित स्वाक्षरी ..............</td></tr></table>";
 }
+function mig(m){ if(!m) return m; m.an = m.an || { pct:"50" }; m.f5 = m.f5 || {}; m.f6 = m.f6 || {}; if(!m.firstDate && m.preDate) m.firstDate = m.preDate; return m; }
 function off(){ return LS("mb_off") || { sak:"", mak:"", uak:"" }; }
 function rowsA(from, to){
   return R9A.slice(from, to).map(function(r, i){
@@ -272,53 +304,263 @@ function chTable(title, rows){
     rows.map(function(r, i){ var k = r[0], d = M.ch[k], diff = d.s !== "" && d.act !== d.s;
       return "<tr><td class=c>" + (i + 1) + ".</td><td>" + esc(r[1]) + "</td><td class=c>" + F("ch." + k + ".u") + "</td><td>" + F("ch." + k + ".s") + '</td><td><input class="f' + (diff ? " diff" : "") + '" data-f="ch.' + k + '.act" value="' + esc(d.act) + '"></td></tr>'; }).join("") + "</table>";
 }
+/* ---------- होय/नाही निवड ---------- */
+function YN(path, en){
+  var v = get(path), o = en ? ["Yes","No"] : ["होय","नाही"];
+  return '<select class="f yn" data-f="' + path + '"><option value="">' + o.join(" / ") + "</option>" + o.map(function(x){ return "<option" + (v === x ? " selected" : "") + ">" + x + "</option>"; }).join("") + "</select>";
+}
+function pmFoot(){ return '<div class="pm">प्रकल्प व्यवस्थापक<br>महाराष्ट्र राज्य फलोत्पादन आणि औषधी वनस्पती मंडळ, पुणे.</div>'; }
+function benLines(){
+  return "लाभार्थ्याचे नाव :- श्री./श्रीमती " + F("ben.name", "w220") + "<br>&nbsp;&nbsp;&nbsp; गाव " + F("ben.vil", "w140") + " ता. " + F("ben.tal", "w140") + " जि. " + F("ben.dist", "w140") + " मो.नं. " + F("ben.mobile", "w140") +
+    "<br>&nbsp;&nbsp;&nbsp; गट नं. / सर्वे नं. " + F("ben.gat", "w80") + " वर्गवारी (अ.जा./अ.ज./सर्वसाधारण) " + F("ben.cat", "w140") +
+    "<br>&nbsp;&nbsp;&nbsp; अक्षांश : " + F("ben.lat", "w140") + " रेखांश : " + F("ben.lng", "w140");
+}
+var FV = function(v){ return '<span class="fx">' + esc(v) + "</span>"; };
+
+/* ---------- प्रपत्र ५ ब — प्रथम मोका तपासणी (४ पाने) ---------- */
+var CMP5 = [["gi","GI Pipe"],["tape","Tape net"],["mono","Mono net"],["ins","Insect net"],["apr","Apron Paper"]];
+var GI5 = [["60.3","3.0","4.24"],["48.3","3.0","3.35"],["42.4","2.5","2.46"],["33.7","2.5","1.92"]];
+function giTable(t){
+  return '<table class="sm"><tr><th rowspan="2" class="w40">अ.क्र.</th><th colspan="3">जीआय पाईपचा तांत्रिक तपशील</th><th colspan="2">पाईपचा व्यास</th><th colspan="2">पाईपची जाडी मि.मी.</th><th colspan="2">वजन</th><th>शेरा</th></tr>' +
+    "<tr><th>पाईपचा प्रकार</th><th>उत्पादक किंवा पुरवठादाराचे नाव</th><th>बीआयएस क्र. व सीएमएल नं.</th><th>अपेक्षित</th><th>प्रत्यक्ष</th><th>अपेक्षित</th><th>प्रत्यक्ष</th><th>अपेक्षित</th><th>प्रत्यक्ष</th><th>प्रमाणित / अप्रमाणित</th></tr>" +
+    GI5.map(function(g, i){ var p = "f5." + t + "." + i + ".";
+      return "<tr><td class=c>" + (i + 1) + "</td><td class=c>" + g[0] + "</td><td>" + F(p + "mk") + "</td><td>" + F(p + "bis") + "</td><td class=c>" + g[0] + "</td><td>" + F(p + "d") + "</td><td class=c>" + g[1] + "</td><td>" + F(p + "t") + "</td><td class=c>" + g[2] + "</td><td>" + F(p + "w") + "</td><td>" + F(p + "rem") + "</td></tr>"; }).join("") + "</table>";
+}
+function pages5b(){
+  var o = off();
+  var A = '<div class="pg"><h3>प्रपत्र – ५ ब</h3><h4>शेडनेटगृह प्रथम मोका तपासणी अहवाल</h4><table><tr><th colspan="2">मंडळ कृषि अधिकारी</th></tr>' +
+    '<tr><td class="k">तपासणी दिनांक</td><td class="lines">' + F("firstDate", "w140") + "</td></tr>" +
+    '<tr><td class="k">तपासणी करणाऱ्या अधिकाऱ्याचे नाव</td><td class="lines">श्री./श्रीमती ' + F("f5.off", "w220", "", o.mak) + " पदनाम " + F("f5.pad", "w140", "", "मंडळ कृषि अधिकारी") + "</td></tr>" + benHead() +
+    '<tr><td class="k">अक्षांश व रेखांश तपशील</td><td class="lines">अक्षांश ' + F("ben.lat", "w140") + " &nbsp; रेखांश " + F("ben.lng", "w140") + "</td></tr>" +
+    '<tr><td class="k">बाब – शेडनेटगृह</td><td class="lines">प्रकार ' + F("bab.type", "w80") + " आकारमान " + F("bab.area", "w80") + " उंची " + F("bab.h", "w40") + "<br>ग्रीड आकार " + F("bab.grid", "w80", "उदा. 6 x 4") + " (मार्गदर्शक सूचनेप्रमाणे नमूद करावे)</td></tr>" +
+    '<tr><td class="k">योजनेचे नाव</td><td class="lines">' + F("scheme", "w220") + "</td></tr>" +
+    '<tr><td class="k">पूर्वसंमती क्र. व दिनांक</td><td class="lines">' + F("pre.no", "w220") + " &nbsp; दिनांक " + F("pre.date", "w140") + "</td></tr>" +
+    '<tr><td class="k">पूर्वसंमती दिलेले क्षेत्र</td><td class="lines">' + F("pre.area", "w80") + " चौ.मी.</td></tr>" +
+    '<tr><th colspan="2">शेडनेटगृहासाठी पुरवठा करण्यात आलेल्या साहित्याची तपासणी</th></tr>' +
+    '<tr><td class="k">नोंदणीकृत उत्पादक / आयातदार कंपनीचा व सेवा पुरवठादाराचा तपशील</td><td class="lines">१. नोंदणीकृत सेवा पुरवठादार :- ' + F("f5.sup.name", "wfull") +
+    "<br>२. सेवा पुरवठादार यांचा राज्यस्तरीय नोंदणी क्रमांक :- " + F("f5.sup.reg", "w140") + "<br>३. सेवा पुरवठादार यांची राज्यस्तरीय नोंदणीच्या आदेशाची वैधता :- " + F("f5.sup.val", "w140") +
+    '<table class="sm" style="margin:6px 0 2px;min-width:0"><tr><th>घटक</th><th>नोंदणीकृत उत्पादक / वितरकाचे नाव</th><th>राज्यस्तरीय नोंदणी क्रमांक</th><th>वैधता</th></tr>' +
+    CMP5.map(function(c){ var p = "f5.cmp." + c[0] + "."; return "<tr><td>" + c[1] + "</td><td>" + F(p + "mk") + "</td><td>" + F(p + "reg") + "</td><td>" + F(p + "val") + "</td></tr>"; }).join("") + "</table></td></tr></table>" + pmFoot() + "</div>";
+  var B = '<div class="pg"><div class="q"><span>१. शेडनेटगृहाच्या मार्गदर्शक सूचनेनुसार मॉडेलनिहाय आवश्यक साहित्याचा आकारमानानुसार आवश्यकतेप्रमाणे पुरवठा केला आहे काय?</span>' + YN("f5.q1") + "</div>" +
+    '<div class="q"><span>२. जीआय पाईपचा सांगाडा उभारणीकरिता आराखड्याप्रमाणे सर्व खड्डे घेण्यात आलेले आहेत काय?</span>' + YN("f5.q2") + "</div>" +
+    '<table class="sm" style="width:70%;min-width:0;margin:6px auto"><tr><th rowspan="2" class="w40">अ.क्र.</th><th rowspan="2">तपशील</th><th colspan="2">खड्ड्याचे आकारमान (मी)</th></tr><tr><th>अपेक्षित</th><th>प्रत्यक्ष</th></tr>' +
+    "<tr><td class=c>१</td><td>जमिनीलगतचा व्यास</td><td class=c>0.30</td><td>" + F("khadda.a") + "</td></tr><tr><td class=c>२</td><td>तळाचा व्यास</td><td class=c>0.45</td><td>" + F("khadda.b") + "</td></tr><tr><td class=c>३</td><td>खोली</td><td class=c>0.75</td><td>" + F("khadda.c") + "</td></tr></table>" +
+    "<h5>जीआय पाईपचे तांत्रिक तपासणी तपशील</h5><b>अ. शेडनेटगृहासाठी सांगाडा उभारणी Type I Structure</b>" +
+    '<div class="q"><span>जीआय पाईप्स - As per BIS amendment No.2 IS 1161:2014 आहे काय?</span>' + YN("f5.bis1") + "</div>" + giTable("t1") +
+    "<p class=hint2>• व्यास, जाडी व वजन यासाठी पाईपच्या प्रत्येक प्रकारातील एका पाईपचे मोजमाप घ्यावे.</p><p class=c style='margin:2px 0'><b>किंवा</b></p>" +
+    "<b>अ. शेडनेटगृहासाठी सांगाडा उभारणी Type II Structure</b>" + '<div class="q"><span>जीआय पाईप्स - As per BIS amendment No.2 IS 1161:2014 आहे काय?</span>' + YN("f5.bis2") + "</div>" + giTable("t2") + pmFoot() + "</div>";
+  var C = '<div class="pg"><div class="q"><span>• कॉलम पाईपवर योजनेचे नाव, पूर्वसंमती वर्ष, शेतकरी नाव अद्याक्षरे, पूर्वसंमती क्रमांक याचे मार्किंग केले आहे काय?</span>' + YN("f5.mark") + "</div>" +
+    '<div class="lines">• मार्किंगचा तपशील - ' + F("f5.markTxt", "w220", "उदा. MIDH-2026-27-SBR-3622960") + "<br>जीआय पाईपच्या पृष्ठभागावर मार्किंग केलेल्याचे फोटोग्राफ्स घ्यावेत व तपासणी अहवालासोबत अपलोड करावेत.</div>" +
+    "<h5>ब. शेडनेटगृहासाठी टेपनेट / मोनोनेट -</h5>" +
+    '<table class="sm"><tr><th colspan="6">तांत्रिक निकष — शेडनेटगृहासाठी टेपनेट (IS16008:2016) Part I आणि मोनोनेट (IS16008:2016) - Part II</th><th rowspan="3" class="w80">होय/नाही<br>शेरा प्रमाणित / अप्रमाणित</th></tr>' +
+    '<tr><th colspan="3">टेपनेट - यु व्ही संस्कारित</th><th colspan="3">मोनोनेट - यु व्ही संस्कारित</th></tr><tr><th>सावलीचा गुणांक (टक्केवारी)</th><th>अपेक्षित वजन (ग्रॅम प्रति चौ.मी.)</th><th>प्रत्यक्ष वजन</th><th>सावलीचा गुणांक (टक्केवारी)</th><th>अपेक्षित वजन (ग्रॅम प्रति चौ.मी.)</th><th>प्रत्यक्ष वजन</th></tr>' +
+    [["35 %","80","90"],["50 %","100","105 / 125"],["75 %","120","140"]].map(function(r, i){
+      return "<tr><td class=c>" + r[0] + "</td><td class=c>" + r[1] + "</td><td>" + F("f5.tape." + i) + "</td><td class=c>" + r[0] + "</td><td>" + F("f5.monoE." + i, "", "", r[2]) + "</td><td>" + F("f5.mono." + i) + "</td>" + (i ? "" : '<td rowspan="3">' + F("f5.netRem") + "</td>") + "</tr>"; }).join("") +
+    '<tr><td colspan="6">BIS प्रमाणे नसल्यास अधिकृतपणे आयात केलेली व (IS16008:2016 Part I, Part II) किंवा त्यापेक्षा उच्च दर्जाची आहे काय? (सिपेट रिपोर्ट तपासावा)</td><td>' + YN("f5.netBis") + "</td></tr>" +
+    '<tr><td colspan="7" class="small">मार्गदर्शक सूचनेनुसार दिलेल्या गुणधर्माची पुर्तता आहे काय? (UV Stabilized) सदरची बाब राज्यस्तरावर <b>नोंदणीकृत आयातदाराच्या वैध CIPET Report</b> वरुन प्रमाणपत्रावरुन तपासावी तसेच <b>नोंदणीकृत सेवा पुरवठादाराचे देयक तपासावे.</b> सेवा पुरवठादाराच्या देयकामध्ये नेटच्या दर्जाबाबत तसेच गुणधर्माबाबत व इतर तपशील लॉट नं., कंपनी, इ नमुद असावे).</td></tr></table>' +
+    "<h5>क. शेडनेटगृहासाठी इनसेक्टनेट (IS16513:2016)</h5>" +
+    '<table class="sm"><tr><th colspan="2">इनसेक्टनेट ३० मेश यु व्ही संस्कारित</th><th colspan="2">इनसेक्टनेट ४० मेश यु व्ही संस्कारित</th><th colspan="2">इनसेक्टनेट ५० मेश यु व्ही संस्कारित</th><th rowspan="2" class="w80">शेरा</th></tr>' +
+    "<tr><th>अपेक्षित वजन (ग्रॅम प्रति चौ.मी.)</th><th>प्रत्यक्ष वजन</th><th>अपेक्षित वजन</th><th>प्रत्यक्ष वजन</th><th>अपेक्षित वजन</th><th>प्रत्यक्ष वजन</th></tr>" +
+    "<tr><td class=c>90</td><td>" + F("f5.ins.0") + "</td><td class=c>105</td><td>" + F("f5.ins.1") + "</td><td class=c>125</td><td>" + F("f5.ins.2") + "</td><td>" + F("f5.insRem") + "</td></tr>" +
+    '<tr><td colspan="6">BIS प्रमाणे नसल्यास अधिकृतपणे आयात केलेली व (IS16513 : 2016) किंवा त्यापेक्षा उच्च दर्जाची आहे काय?</td><td>' + YN("f5.insBis") + "</td></tr></table>" +
+    "<h5>ड. शेडनेटगृहासाठी ॲपरॉन - यु व्ही संस्कारित लॅमिनेटेड ओव्हन पॉलिइथिलीन फिल्म आणि ॲल्युमिनियम प्रोफाईल</h5>" +
+    '<table class="sm"><tr><th colspan="2">यु व्ही संस्कारित लॅमिनेटेड ओव्हन पॉलिइथिलीन फिल्म</th><th colspan="2">ॲल्युमिनियम प्रोफाईल</th><th rowspan="2" class="w80">शेरा</th></tr>' +
+    "<tr><th>अपेक्षित वजन (ग्रॅम प्रति चौ.मी.)</th><th>प्रत्यक्ष वजन</th><th>अपेक्षित वजन (ग्रॅम प्रति मीटर)</th><th>प्रत्यक्ष वजन</th></tr>" +
+    "<tr><td class=c>120</td><td>" + F("f5.apr") + "</td><td class=c>190</td><td>" + F("f5.prof") + "</td><td>" + F("f5.aprRem") + "</td></tr>" +
+    '<tr><td colspan="4">ॲपरॉन - यु व्ही संस्कारित लॅमिनेटेड ओव्हन पॉलिइथिलीन फिल्म नोंदणीकृत उत्पादक कंपनी किंवा त्यांचे अधिकृत वितरक व नोंदणीकृत सेवा पुरवठादार यांच्याकडून पुरवठा झाला आहे किंवा कसे?</td><td>' + YN("f5.aprQ") + "</td></tr></table>" + pmFoot() + "</div>";
+  var D = '<div class="pg"><table class="sm">' +
+    "<tr><td class=c>फ</td><td>इतर साहित्य मार्गदर्शक सूचनेतील तांत्रिक निकषाप्रमाणे आहे काय?</td><td class=w80>" + YN("f5.f1") + "</td></tr>" +
+    "<tr><td></td><td>शेडनेटगृहाची उभारणीची जागा व दिशा विचारात घेवून मार्गदर्शक सूचनेतील आराखड्याप्रमाणे उभारणी नियोजन (आरेखन) आहे काय?</td><td>" + YN("f5.f2") + "</td></tr>" +
+    "<tr><td class=c rowspan=2>ग</td><td>शेडनेटगृह पायासाठी आराखड्याप्रमाणे खड्ड्यांची संख्या घेतली आहे काय?<br><span class=small>(पाया पक्का होण्यासाठी योग्य व्यासाचा फाऊंडेशन पाईप, होल्ड फास्ट बार (८ मि.मी. जाडीचा), योग्य प्रमाणाचे कॉंक्रिट मिश्रणाने (१ : ४ : ८) भरणे या बाबींकडे लाभार्थी शेतकऱ्यांनी विशेष लक्ष देणे बाबत तसेच हरितगृहाचे आयुष्यमान व पक्क्या उभारणीकरीता पाया मजबूत असणे आवश्यक असलेबाबत लाभार्थ्यास मार्गदर्शन करावे.)</span></td><td>" + YN("f5.g1") + "</td></tr>" +
+    "<tr><td>पुरवठा केलेले सर्व साहित्य मार्गदर्शक सूचनेतील दिलेल्या निकषांप्रमाणे असून तसेच इतर बाबींतही मार्गदर्शक सूचनांचा अवलंब केला असलेने/नसलेने लाभार्थ्यांने उभारणी करण्यास हरकत नाही/आहे.</td><td>" + YN("f5.g2") + "</td></tr></table>" +
+    "<h5>शेडनेटगृहाच्या दर्जाची खात्री करणेसाठी पुरवठादाराकडील खालील अभिलेख्यांची तपासणी करावी.</h5><ol class=ol>" +
+    "<li>नोंदणीकृत <b>आयातदाराच्या</b> शेडनेटच्या दर्जा व गुणधर्माबाबतचे पत्र/प्रमाणपत्र <b>(CIPET Report)</b></li>" +
+    "<li>नोंदणीकृत उत्पादकाकडील प्रमाणित तांत्रिक माहितीचे विवरणपत्र (Technical Data Sheet) (सदर माहिती उत्पादकाची प्रमाणित केलेली आवश्यक आहे.)</li>" +
+    "<li>शेडनेटच्या बंडलवर ब्रॅंडचे नाव, बॅच क्रमांक, शेडनेटचा प्रकार, लांबी रुंदी (उत्पादन दिनांकाचा उल्लेख असलेला), लोगो इ. बाबींचे लेबल असावे.</li>" +
+    "<li>पुरवठा केलेल्या साहित्याचा नमुना काढून <b>शेतकरी, कंपनी प्रतिनिधी व तपासणी अधिकारी यांच्या स्वाक्षरीसह</b> गोणीमध्ये <b>सीलबंद</b> करुन शेतकऱ्याकडे जतन करुन ठेवला आहे काय?</li></ol>" +
+    '<table class="sm" style="width:80%;min-width:0;margin:4px auto"><tr><th class=w40>अ.क्र.</th><th>बाब</th><th>नमुना आकार</th><th>होय / नाही</th></tr>' +
+    [["GI Pipe - प्रत्येक प्रकारचे","प्रत्येकी ०.५ मी लांबी"],["पॉली फिल्म","१ x १ मी"],["टेपनेट","१ x १ मी"],["मोनोनेट","१ x १ मी"],["इन्सेक्ट नेट","१ x १ मी"],["ॲप्रन पेपर","१ x १ मी"],["ॲल्युमिनियम प्रोफाइल","१ मी"]].map(function(r, i){
+      return "<tr><td class=c>" + (i + 1) + "</td><td>" + r[0] + "</td><td class=c>" + r[1] + "</td><td>" + YN("f5.smp." + i) + "</td></tr>"; }).join("") + "</table>" +
+    '<table class="sig2"><tr><td>लाभार्थ्याचे नाव व स्वाक्षरी<br>श्री. ' + FV(M.ben.name) + "<br><br>(दिनांकित स्वाक्षरी)</td><td>नोंदणीकृत सेवा पुरवठादाराचे नाव व स्वाक्षरी<br>संस्थेचे नाव / श्री / श्रीमती " + FV(get("f5.sup.name") || (M.src && M.src.coName) || "") + "<br><br>(दिनांकित स्वाक्षरी)</td></tr>" +
+    "<tr><td>मंडळ कृषि अधिकारी<br>श्री. " + FV(get("f5.off") || o.mak) + "<br><br>(दिनांकित स्वाक्षरी)</td><td></td></tr></table><p class=small>(टिप - सदर तपासणी अहवालाची एक प्रत लाभार्थ्यास द्यावी.)</p>" + pmFoot() + "</div>";
+  return [A, B, C, D];
+}
+
+/* ---------- प्रपत्र ६ क — अंतिम मोका तपासणी ---------- */
+var CH6 = [["bed","Concrete Bed - 6 Sq.mtrs."],["pump","Pump"],["tank","Water Storage Tank"],["cpan","Control Panel Box with timer"],["sand","Sand Filter with back wash assembly"],["disc","Disc Filter"]];
+var GIS = ["Tor bar for hold-fast in foundation","Foundation for main columns","Foundation for periphery /middle columns","Main columns","Periphery/middle columns","Truss","Purlins","Main corridors","Middle corridors","Door","Door column","Door corridor","Door top"];
+var ST6 = [["net","Shade Net (Tapenet OR Mononet OR Insect net OR Thermal net on roof)"],["ins","Insect Net (on sides)"],["apr","Laminated woven film (apron)"],["prof","Aluminium Profiles"],["spr","Locking spring"],["scr","Self drilling tapping Screws"],["clamp","Clamps & Accessories"],["nut","High Tensile Nuts & Bolts"],["door","UV Stabilized FRP-Door"]];
+var ST6B = [["fnd","Foundation - Civil Material"],["fndl","Foundation"],["fab","Fabrication"],["inst","Installation"],["oth","Other"]];
+function q6(k){ var p = "f6.st." + k + "."; return "<td class=c>" + F("r9a." + k + ".u") + "</td><td>" + F(p + "g") + "</td><td>" + F("r9a." + k + ".bill") + "</td><td>" + YN(p + "yn", 1) + "</td>"; }
+function optTable(){
+  return '<table class="sm"><tr><th class="w40">Sr.No.</th><th>List of Items & their Specification</th><th class="w80">Unit</th><th class="w80">Quantity as per Guideline</th><th class="w80">Quantity as per Invoice Produced</th><th class="w80">Material as per Technical Specification Yes / No</th></tr>' +
+    ROP.map(function(r, i){ var k = r[0], d = esc(r[1]);
+      if(k === "htp") d = "<b>HTP single piston pump</b><br>1. Electric motor (min 3 hp)<br>2. Panel box<br>3. Pipe- 50 mtr Length<br>4. With spray gun";
+      if(k === "trel") d = "<b>Trellising System for Vegetable</b>" + '<table class="in"><tr><th colspan="3">Trellising System Quantity of Material required cropwise</th></tr><tr><th>Sr.</th><th>Particulars</th><th>Unit</th></tr><tr><td>1</td><td>No of "J" Hooks per plant =01</td><td>Nos</td></tr><tr><td>2</td><td>No of Clips per plant=4.5</td><td>Nos</td></tr><tr><td>3</td><td>Length of Twine per plant = 4.8 m</td><td>Mtrs</td></tr><tr><td>4</td><td>GI wire = 1.4 x Area of structure (excluding corridor area)</td><td>Mtrs</td></tr><tr><td>5</td><td>Labour Charges (25 % Material)</td><td></td></tr></table>';
+      return "<tr><td class=c>" + (i + 1) + "</td><td>" + d + "</td><td class=c>" + F("opt." + k + ".u") + "</td><td>" + F("opt." + k + ".guide") + "</td><td>" + F("opt." + k + ".inv") + "</td><td>" + F("opt." + k + ".yn") + "</td></tr>"; }).join("") + "</table>";
+}
+/* अनुदान परिगणना — ब. देयकानुसार (रकाने दोन्ही प्रपत्रात एकच data) */
+var AN6 = [["s","Shadenet house Structure cost"],["c","Micro Irrigation System (Drip / Mini / Micro / Inverted Sprinkler)"],["e","Control Head"],["d","Fogging system"],["f","Optional Item Cost"]];
+var AN9 = [["c","Irrigation System"],["d","Fogging System"],["e","Control System"],["s","Shadenet House Structure Cost"],["f","Optional Item Cost"]];
+var ANO = ["Air circulating Fans","HTP single piston pump","Change in Cladding material","2 leaf door for tractor","Trellising System","Additional Working Net / Sliding Net with GI Wire","Plastic Mulching","Water Storage Tank"];
+function anTable(rows, withSub){
+  var n = rows.length + (withSub ? ANO.length : 0);
+  var h = '<table class="sm an"><tr><th class="w40">Sr. No.</th><th>Particulars</th><th>Cost Norm (per Sq.mtr) OR Per Unit</th><th>Bill No and Date</th><th>Invoice Name</th><th>Amount As per Bill (Rs.)</th><th>Amount As per Cost Norms (Cost Norm X Area Sq. mtr)</th><th>Recommended Amount (Rs.) (Whichever less)</th></tr>';
+  var first = true;
+  function cells(p){ return "<td>" + F(p + "amt") + "</td><td>" + F(p + "nAmt") + "</td><td>" + F(p + "rec") + "</td>"; }
+  rows.forEach(function(r, i){
+    var p = "an." + r[0] + ".";
+    h += "<tr><td class=c>" + (i + 1) + "</td><td>" + r[1] + "</td><td>" + F(p + "norm") + "</td>" + (first ? '<td rowspan="' + n + '" class="vt">' + T("an.billNo") + '</td><td rowspan="' + n + '" class="vt">' + T("an.inv") + "</td>" : "") + cells(p) + "</tr>";
+    first = false;
+    if(withSub && r[0] === "f") ANO.forEach(function(t, j){ var q = "an.f.o" + (j + 1) + ".";
+      h += '<tr class="sub"><td></td><td>&nbsp;&nbsp;' + (j + 1) + ". " + t + "</td><td>" + F(q + "norm") + "</td>" + cells(q) + "</tr>"; });
+  });
+  return h + '<tr><td colspan="5" class="c"><b>Total</b></td>' + cells("an.tot.") + "</tr></table>";
+}
+function pages6k(){
+  var o = off();
+  var A = '<div class="pg"><h3>प्रपत्र – ६ क</h3><h4>शेडनेटगृह अंतिम मोका तपासणी अहवाल<br><small>(मंडळ कृषि अधिकारी व उपविभागीय कृषि अधिकारी)</small></h4><div class="lines">' +
+    "१. तपासणी दिनांक : " + F("f6.date", "w140") + "<br>२. तपासणी करणाऱ्या उविकृअ यांचे नाव :- श्री. " + F("f6.uak", "w220", "", o.uak) + "<br>३. तपासणी करणाऱ्या मंकृअ यांचे नाव :- श्री. " + F("f6.mak", "w220", "", o.mak) +
+    "<br>४. " + benLines() + "<br>५. बाब - शेडनेटगृह, प्रकार, उंची व ग्रीड (मार्गदर्शक सूचनेप्रमाणे आकारमान नमूद करावे) " + F("bab.type", "w80") + " उंची " + F("bab.h", "w40") + " ग्रीड " + F("bab.grid", "w80") +
+    "<br>६. पूर्वसंमती दिलेले क्षेत्र " + F("pre.area", "w80") + " चौ.मी.<br>७. उभारणीपूर्व प्रथम तपासणीचा दिनांक :- " + F("firstDate", "w140") +
+    '</div><div class="q"><span>८. प्रथम तपासणीवेळी पुढील उभारणीची परवानगी दिली आहे काय?</span>' + YN("f6.q8") + '</div><div class="q"><span>९. प्रथम मोका तपासणीनुसार मापनपुस्तिका नोंदी पडताळणी केली आहे काय ?</span>' + YN("f6.q9") + "</div>" +
+    '<div class="lines">१०. प्रकल्पाचा मोका तपासणी तपशील<br>&nbsp;&nbsp;&nbsp; १०.१ लांबी ' + F("bab.l", "w80") + " मी. रुंदी " + F("bab.w", "w80") + " मी. उंची " + F("bab.h", "w80") + " मी.<br>&nbsp;&nbsp;&nbsp; १०.२ क्षेत्रफळ " + F("bab.area", "w80") + " चौ.मी. (अ)<br>&nbsp;&nbsp;&nbsp; १०.३ मंजूर आकारमानाप्रमाणे उभारणीसाठी वापरलेल्या साहित्याचा तपशील - (स्वतंत्र परिशिष्ट जोडावे)</div>" +
+    "<h5>११. कंट्रोल हेडचे विविध घटकांचे तांत्रिक निकष, परिमाण :-</h5>" +
+    '<table class="sm"><tr><th class="w40">Sr. No.</th><th>Particulars (Control head Items)</th><th class="w80">Details of Material Specification / Unit</th><th class="w80">Quantity As per Guidelines</th><th class="w80">Quantity As per Invoice Produced</th><th class="w80">Material as per Technical Specification Yes/No</th></tr>' +
+    CH6.map(function(r, i){ var p = "f6.ch." + r[0] + "."; return "<tr><td class=c>" + (i + 1) + "</td><td>" + r[1] + "</td><td class=c>" + F("ch." + r[0] + ".u") + "</td><td>" + F(p + "g") + "</td><td>" + F(p + "i") + "</td><td>" + YN(p + "yn", 1) + "</td></tr>"; }).join("") + "</table>" +
+    '<div class="q"><span>कंट्रोल हेडच्या विविध घटकाचे मॉडेलनिहाय तांत्रिक निकष मार्गदर्शक सूचनेमध्ये नमुद केल्याप्रमाणे आहेत काय?</span>' + YN("f6.chq") + "</div>" + pmFoot() + "</div>";
+  function irT(title, rows, pre){ return "<h5>" + title + '</h5><table class="sm"><tr><th class="w40">Sr. No</th><th>Component</th><th>Details of Material Specifications</th><th class="w80">Material as per Technical Specification Yes/No</th></tr>' +
+    rows.map(function(r, i){ var p = "f6." + pre + "." + r[0] + "."; return "<tr><td class=c>" + (i + 1) + "</td><td>" + esc(r[1]) + "</td><td>" + F(p + "sp") + "</td><td>" + YN(p + "yn", 1) + "</td></tr>"; }).join("") + "</table>"; }
+  var B = '<div class="pg">' + irT("१२. सिंचन सुविधा घटकाचे तांत्रिक निकष", RIR, "ir") + irT("१३. फॉगिंग यंत्रणा घटकाचे तांत्रिक निकष", RFG, "fg") +
+    '<div class="q"><span>• शेडनेटगृहाकरिता क्षेत्रानुसार उपरोक्तप्रमाणे सिंचन सुविधा व फॉगिंग यंत्रणेतंर्गत विविध क्षमतेच्या (Capacity) साहित्याचा वापर आवश्यकतेनुसार केला आहे काय ?</span>' + YN("f6.irq") + "</div>" +
+    '<p class="pp">• उपरोक्त एक किंवा सर्व साहित्याचा तांत्रिक निकषाप्रमाणे वापर केला नसल्यास सिंचन सुविधा व फॉगिंग यंत्रणा या घटकाकरिता अनुदान देय राहणार नाही याची लाभार्थ्यास जाणीव करुन देण्यात यावी.</p>' +
+    '<div class="q"><span>• सिंचन यंत्रणा, फॉगिंग यंत्रणा व कंट्रोल हेड या घटकाकरिता साहित्य पुरवठा करणाऱ्या उत्पादक कंपनी / वितरक हा कृषि विभागाकडे नोंदणीकृत आहे किंवा नाही याची पडताळणी करावी.</span>' + YN("f6.reg") + "</div>" +
+    '<div class="lines">• नोंदणीकृत उत्पादक कंपनीचे / वितरकाचे नाव ' + F("f6.irCo", "w220", "", M.src && M.src.coName ? "मे. " + M.src.coName : "") + "</div>" + pmFoot() + "</div>";
+  var C = '<div class="pg"><h5 style="margin-top:0">१४. मुख्य स्ट्रक्चरचे विविध घटकाचे तांत्रिक निकष, परिमाण :- बाबाबतची पडताळणी सेवा पुरवठादाराचे देयक, प्रथम मोका तपासणी अहवाल व वापरलेले साहित्य यावरुन करावी.</h5>' +
+    '<table class="sm st"><tr><th class="w40" colspan="2">Sr. No.</th><th>Particulars</th><th class="w80">Unit</th><th class="w80">Quantity As per Guidelines</th><th class="w80">Quantity As per Invoice Produced</th><th class="w80">Material as per Technical Specification Yes/No</th></tr>' +
+    '<tr><td class=c colspan="2"><b>A</b></td><td colspan="5"><b>Material</b></td></tr>' +
+    '<tr><td class=c rowspan="' + (GIS.length + 1) + '">1</td><td></td><td>GI Pipes</td><td class=c rowspan="' + (GIS.length + 1) + '">' + F("r9a.gi.u") + '</td><td rowspan="' + (GIS.length + 1) + '">' + F("f6.st.gi.g") + '</td><td rowspan="' + (GIS.length + 1) + '">' + F("r9a.gi.bill") + '</td><td rowspan="' + (GIS.length + 1) + '">' + YN("f6.st.gi.yn", 1) + "</td></tr>" +
+    GIS.map(function(t, i){ return "<tr><td class=c>1." + (i + 1) + "</td><td>" + t + "</td></tr>"; }).join("") +
+    ST6.map(function(r, i){ return "<tr><td class=c colspan=2>" + (i + 2) + "</td><td>" + r[1] + "</td>" + q6(r[0]) + "</tr>"; }).join("") +
+    '<tr><td class=c colspan="2"><b>B</b></td><td colspan="5"><b>Foundation, Fabrication & Installation</b></td></tr>' +
+    ST6B.map(function(r, i){ return "<tr><td class=c colspan=2>" + (i + 11) + "</td><td>" + r[1] + "</td>" + q6(r[0]) + "</tr>"; }).join("") + "</table>" +
+    '<p class="small">(वरील तक्त्यामध्ये मार्गदर्शक सूचनेत आकारमानानुसार दिलेल्या साहित्य यादीप्रमाणे सर्व साहित्याचा वापर करुन त्याप्रमाणे सर्व साहित्य मापनपुस्तिकेत नोंदविण्यात आलेले आहे काय, याचे अवलोकन करावे.)</p>' + pmFoot() + "</div>";
+  var D = '<div class="pg"><h5 style="margin-top:0">१५. वैकल्पिक साहित्याच्या विविध घटकांचे तांत्रिक निकष, परिमाण:-</h5>' + optTable() +
+    '<div class="q"><span>१६. वरील मुद्दा क्र. ११ ते १५ मध्ये सेवा पुरवठादाराने पुरविलेल्या व देयकामध्ये दर्शविलेल्या साहित्याच्या दर्जाबाबत तसेच गुणधर्माबाबत व इतर तपशील लॉट नं., कंपनी, इ नमुद आहे काय?</span>' + YN("f6.q16") + "</div>" +
+    '<h5>१७. अनुदान परिगणना -</h5><div class="lines">अ. मापनानुसार क्षेत्रफळ ' + F("bab.area", "w80") + " चौ.मी. X आकारमानासाठी उच्चतम शिफारस केलेला प्रति चौ.मी. दर (रु. " + F("an.D", "w80") + ") = " + F("an.A", "w140") + " (अ)</div>" + pmFoot() + "</div>";
+  var E = '<div class="pg"><h5 style="margin-top:0">ब. देयकानुसार</h5>' + anTable(AN6, true) + '<div class="lines" style="margin-top:8px">' +
+    "१८. उपरोक्त परिशिष्टाप्रमाणे वापरण्यात आलेल्या साहित्याची एकुण किंमत (प्रत्यक्ष खर्च) रु. " + F("an.B", "w140") + " (ब)" +
+    "<br>१९. प्रत्यक्ष खर्चाप्रमाणे (ब) व क्षेत्रफळानुसार येणारा प्रती चौ.मी. दर ( ब ÷ क्षेत्रफळ ) = रु. " + F("an.K", "w80") + " (क)" +
+    "<br>२०. मार्गदर्शक सूचनेत उपरोक्त आकारमानासाठी शिफारस केलेला उच्चतम प्रती चौ.मी. दर रु. " + F("an.D", "w80") + " (ड)" +
+    "<br>२१. उपरोक्त 'क' व 'ड' पैकी कमी असलेला प्रती चौ.मी. दर रु. " + F("an.I", "w80") + " (इ)" +
+    "<br>२२. अर्थसहाय्यासाठी पात्र खर्च रक्कम (२१ येथील प्रती चौ.मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) रु. " + F("an.Ph", "w140") + " (फ)</div>" + pmFoot() + "</div>";
+  var Fp = '<div class="pg"><div class="lines">२३. फ प्रमाणे उभारणी खर्च ग्राह्य धरून अर्थसहाय्य (' + F("an.pct", "w40") + " टक्के) रक्कम रु. " + F("an.sub", "w140") + "<br>अक्षरी (" + F("an.words", "wfull") + ")<br>मंजूर करण्याची शिफारस करण्यात येत आहे.</div>" +
+    '<p class="pp">२४. वरील प्रमाणे सर्व तांत्रिक निकषांची पुर्तता करत आहे. तसेच या शेडनेटगृहामध्ये लाभार्थ्याने ' + F("f6.crop", "w140", "पीक") + " पीक लागवडीसाठी गादी वाफे तयार करणे, ठिबक सिंचन / मायक्रो / मिनी / इन्व्हर्टेड स्प्रिंकलर, फॉगिंग यंत्रणा व कंट्रोल हेड संचाची जोडणी पूर्ण केली असून सदर यंत्रणा कार्यान्वित केली असल्याची खात्री केली आहे.</p>" +
+    '<table class="sig2" style="margin-top:20px"><tr><td>' + FV(M.ben.name) + "<br>लाभार्थ्याचे नाव व स्वाक्षरी</td><td><br>नोंदणीकृत सेवा पुरवठादाराचे नाव व स्वाक्षरी</td></tr>" +
+    "<tr><td>मंडळ कृषि अधिकारी<br>श्री. " + FV(get("f6.mak") || o.mak) + "<br><br>(दिनांकित स्वाक्षरी)</td><td>उपविभागीय कृषि अधिकारी<br>श्री. " + FV(get("f6.uak") || o.uak) + "<br><br>(दिनांकित स्वाक्षरी)</td></tr></table>" +
+    '<p class="small">(टिप - सदर तपासणी अहवालाची एक प्रत लाभार्थ्यास द्यावी.)</p>' + pmFoot() + "</div>";
+  return [A, B, C, D, E, Fp];
+}
+/* प्रपत्र ९ इ — ८. अनुदान परिगणना */
+function page9eAn(){
+  return '<div class="pg"><h5 style="margin-top:0">८. अनुदान परिगणना –</h5><b>ब. देयकानुसार</b>' + anTable(AN9, false) + '<div class="lines" style="margin-top:8px">' +
+    "९. उपरोक्त परिशिष्टाप्रमाणे वापरण्यात आलेल्या साहित्याची एकुण किंमत (प्रत्यक्ष खर्च) रु. " + F("an.B", "w140") + " (ब)" +
+    "<br>१०. प्रत्यक्ष खर्चाप्रमाणे (ब) व क्षेत्रफळानुसार येणारा प्रती चौ.मी. दर = ( ब ÷ क्षेत्रफळ अ ) = रु. " + F("an.K", "w80") + " (क)" +
+    "<br>११. मार्गदर्शक सूचनेत उपरोक्त आकारमानासाठी शिफारस केलेला प्रती चौ.मी. दर रु. " + F("an.D", "w80") + " (ड)" +
+    "<br>१२. उपरोक्त 'क' व 'ड' पैकी कमी असलेला प्रती चौ. मी. दर रु. " + F("an.I", "w80") + " (इ)" +
+    "<br>१३. अर्थसहाय्यासाठी पात्र खर्च रक्कम (१२ येथील प्रती चौ. मी. दर (इ) X प्रत्यक्ष क्षेत्रफळ (अ) चौ.मी. मध्ये) = रु. " + F("an.Ph", "w140") + " (फ)" +
+    "<br>१४. फ प्रमाणे उभारणी खर्च ग्राह्य धरुन अर्थसहाय्य रक्कम (" + F("an.pct", "w40") + " टक्के) = रु. " + F("an.sub", "w140") +
+    "<br>&nbsp;&nbsp;&nbsp; उपरोक्तप्रमाणे रक्कम रु. " + F("an.sub", "w140") + " (अक्षरी) (" + F("an.words", "wfull") + ")<br>&nbsp;&nbsp;&nbsp; अर्थसहाय्य रक्कम अदायगीस मान्यता देण्यात येत आहे.</div>" + sigBlock() + "</div>";
+}
+
+/* ---------- 🧮 हिशोब (फक्त बटण दाबल्यावर) ---------- */
+function num(v){ var x = parseFloat(String(v == null ? "" : v).replace(/[,\s₹]/g, "")); return isFinite(x) ? x : null; }
+function inr(x, dec){ if(x == null || !isFinite(x)) return ""; return Number(x).toLocaleString("en-IN", { minimumFractionDigits:dec || 0, maximumFractionDigits:dec || 0 }); }
+var MR = "शून्य एक दोन तीन चार पाच सहा सात आठ नऊ दहा अकरा बारा तेरा चौदा पंधरा सोळा सतरा अठरा एकोणीस वीस एकवीस बावीस तेवीस चोवीस पंचवीस सव्वीस सत्तावीस अठ्ठावीस एकोणतीस तीस एकतीस बत्तीस तेहेतीस चौतीस पस्तीस छत्तीस सदतीस अडतीस एकोणचाळीस चाळीस एक्केचाळीस बेचाळीस त्रेचाळीस चव्वेचाळीस पंचेचाळीस सेहेचाळीस सत्तेचाळीस अठ्ठेचाळीस एकोणपन्नास पन्नास एक्कावन्न बावन्न त्रेपन्न चोपन्न पंचावन्न छप्पन्न सत्तावन्न अठ्ठावन्न एकोणसाठ साठ एकसष्ठ बासष्ठ त्रेसष्ठ चौसष्ठ पासष्ठ सहासष्ठ सदुसष्ठ अडुसष्ठ एकोणसत्तर सत्तर एक्काहत्तर बाहत्तर त्र्याहत्तर चौऱ्याहत्तर पंच्याहत्तर शहात्तर सत्याहत्तर अठ्ठ्याहत्तर एकोणऐंशी ऐंशी एक्याऐंशी ब्याऐंशी त्र्याऐंशी चौऱ्याऐंशी पंच्याऐंशी शहाऐंशी सत्त्याऐंशी अठ्ठ्याऐंशी एकोणनव्वद नव्वद एक्याण्णव ब्याण्णव त्र्याण्णव चौऱ्याण्णव पंच्याण्णव शहाण्णव सत्त्याण्णव अठ्ठ्याण्णव नव्व्याण्णव".split(" ");
+function mrWords(n){
+  n = Math.round(n); if(!n) return "";
+  var out = [], parts = [[10000000, "कोटी"], [100000, "लाख"], [1000, "हजार"], [100, "शे"]];
+  parts.forEach(function(p){ var q = Math.floor(n / p[0]); if(q){ out.push(p[0] === 100 ? (q === 1 ? "एकशे" : MR[q] + "शे") : (q < 100 ? MR[q] : mrWords(q)) + " " + p[1]); n -= q * p[0]; } });
+  if(n) out.push(MR[n]);
+  return out.join(" ");
+}
+function calcAn(){
+  var area = num(M.bab.area), an = M.an = M.an || {}, keys = ["s","c","d","e","f"], tot = { amt:0, nAmt:0, rec:0 }, normSum = 0, any = 0;
+  function row(r){
+    var amt = num(r.amt), norm = num(r.norm), nA = norm != null && area ? Math.round(norm * area) : num(r.nAmt);
+    if(norm != null) r.nAmt = inr(nA);
+    var rec = amt != null && nA != null ? Math.min(amt, nA) : (amt != null ? amt : nA);
+    if(rec != null) r.rec = inr(rec);
+    return { amt:amt, nA:nA, rec:rec, norm:norm };
+  }
+  keys.forEach(function(k){
+    var r = an[k] = an[k] || {};
+    if(k === "f"){ var s = 0, has = 0; for(var j = 1; j <= ANO.length; j++){ var o = r["o" + j]; if(o){ var x = row(o); if(x.amt != null){ s += x.amt; has = 1; } } } if(has && num(r.amt) == null) r.amt = inr(s); }
+    var v = row(r); if(v.amt != null){ tot.amt += v.amt; any = 1; } if(v.nA != null) tot.nAmt += v.nA; if(v.rec != null) tot.rec += v.rec; if(v.norm != null) normSum += v.norm;
+  });
+  if(!any){ status("🧮 हिशोबासाठी आधी \"Amount As per Bill\" भरा.", "warn"); return; }
+  an.tot = { amt:inr(tot.amt), nAmt:tot.nAmt ? inr(tot.nAmt) : "", rec:inr(tot.rec) };
+  an.B = inr(tot.amt);
+  var K = area ? tot.amt / area : null; if(K != null) an.K = inr(K, 2);
+  if(normSum) an.D = inr(normSum, 2);
+  var D = num(an.D), I = K != null && D != null ? Math.min(K, D) : (K != null ? K : D);
+  if(I != null) an.I = inr(I, 2);
+  if(D != null && area) an.A = inr(Math.round(D * area));
+  if(I != null && area){ var Ph = Math.round(I * area); an.Ph = inr(Ph);
+    var pct = num(an.pct) || 50; an.pct = String(pct); var sub = Math.round(Ph * pct / 100); an.sub = inr(sub); an.words = mrWords(sub) + " रुपये मात्र"; }
+  render(); draft();
+  status("🧮 हिशोब भरला — सर्व आकडे तपासा (बदलता येतात). Cost Norm रिकामे असल्यास \"Amount As per Cost Norms\" आपोआप येत नाही.", "ok");
+}
+
 function render(){
   if(!M){ $("doc").innerHTML = ""; $("cInfo").hidden = true; $("bPrint").hidden = true; return; }
   var s = M.src;
   $("cInfo").hidden = false; $("bPrint").hidden = false;
   $("srcInfo").innerHTML = s && s.ocr ? "🔍 बिल वाचून (OCR) भरले व तपासले — " + (s.coName ? "<b>" + esc(s.coName) + "</b> · " : "") + (s.no ? "Invoice <b>" + esc(s.no) + "</b> · " + dmy(s.date) : "") : s ? "✔ बिलातील QR वरून भरले — <b>" + esc(s.coName) + "</b> · Invoice <b>" + esc(s.no) + "</b> · " + dmy(s.date) : "✍ कोरे MB — सर्व माहिती हाताने भरा.";
-  var P1 = '<div class="pg"><div class="no">पान १</div><h3>प्रपत्र – ९ क</h3><h4>शेडनेटगृह मापनपुस्तिका नोंद (साहित्य पुरवठा झाल्यानंतर)</h4><table>' + benHead() +
-    '<tr><td class="k">अक्षांश व रेखांश तपशील</td><td>अक्षांश ' + F("ben.lat", "w140") + " &nbsp; रेखांश " + F("ben.lng", "w140") + "</td></tr>" +
+  var P1 = '<div class="pg"><h3>प्रपत्र – ९ क</h3><h4>शेडनेटगृह मापनपुस्तिका नोंद (साहित्य पुरवठा झाल्यानंतर)</h4><table>' + benHead() +
+    '<tr><td class="k">अक्षांश व रेखांश तपशील</td><td class="lines">अक्षांश ' + F("ben.lat", "w140") + " &nbsp; रेखांश " + F("ben.lng", "w140") + "</td></tr>" +
     '<tr><td class="k">बाब – शेडनेटगृह</td><td class="lines">प्रकार ' + F("bab.type", "w140") + " &nbsp; आकारमान " + F("bab.area", "w80") + "<br>ग्रीड " + F("bab.grid", "w80", "उदा. 6 x 4") + "</td></tr>" +
-    '<tr><td class="k">योजनेचे नाव</td><td>' + F("scheme", "w220") + "</td></tr>" +
-    '<tr><td class="k">पूर्वसंमती क्र. व दिनांक</td><td>' + F("pre.no", "w220") + " &nbsp; दिनांक " + F("pre.date", "w140") + "</td></tr>" +
-    '<tr><td class="k">पूर्वसंमती दिलेले क्षेत्र</td><td>' + F("pre.area", "w80") + " चौ.मी.</td></tr>" +
-    '<tr><td class="k">प्रथम मोका तपासणी दिनांक</td><td>' + F("firstDate", "w140") + "</td></tr></table>" +
+    '<tr><td class="k">योजनेचे नाव</td><td class="lines">' + F("scheme", "w220") + "</td></tr>" +
+    '<tr><td class="k">पूर्वसंमती क्र. व दिनांक</td><td class="lines">' + F("pre.no", "w220") + " &nbsp; दिनांक " + F("pre.date", "w140") + "</td></tr>" +
+    '<tr><td class="k">पूर्वसंमती दिलेले क्षेत्र</td><td class="lines">' + F("pre.area", "w80") + " चौ.मी.</td></tr>" +
+    '<tr><td class="k">प्रथम मोका तपासणी दिनांक</td><td class="lines">' + F("firstDate", "w140") + "</td></tr></table>" +
     "<h5>अ. पुरवठा केलेले सर्व साहित्य मार्गदर्शक सूचनेतील तांत्रिक निकषांप्रमाणे असलेबाबत तपशील</h5><table>" + THA + rowsA(0, 8) + "</table></div>";
-  var P2 = '<div class="pg"><div class="no">पान २</div><table>' + THA + rowsA(8, 15) + "</table>" +
+  var P2 = '<div class="pg"><table>' + THA + rowsA(8, 15) + "</table>" +
     '<div class="cert"><h4 style="margin-top:16px">प्रमाणपत्र</h4>' +
     "<p>१) जीआय पाईप (कॉलम पाईप) च्या उभारणीकरिता पक्का पाया (खड्डा) " + F("khadda.a", "w40") + " मी X " + F("khadda.b", "w40") + " मी X " + F("khadda.c", "w40") + " मी. या आकाराचा <b>(जमिनीलगतचा व्यास X तळाचा व्यास X खोली)</b> खड्डा घेतलेला असून त्यात मधोमध फाउंडेशन पाईप बसवुन त्यास होल्डफास्य बार टाकून <b>१:४:८ प्रमाणात सिमेंट, वाळू, खडी</b> घेऊन तयार केलेले सिमेंट कॉंक्रीट भरण्यात आलेले आहे.</p>" +
     "<p>२) प्रमाणित करण्यात येते की सदरील लाभार्थ्यास शेटनेटगृह या घटकाचा लाभ यापुर्वी देण्यात आलेला नाही.</p>" +
     "<p>३) वरीलप्रमाणे सर्व साहित्याचे तांत्रिक निकम व परिमाण याची पडताळणी करुन त्याच्या नोंदी मापनपुस्तिकेत नोंदविलेल्या आहेत.</p></div>" + sigBlock() + "</div>";
-  var P3 = '<div class="pg"><div class="no">पान ३</div><h3>प्रपत्र – ९ इ</h3><h4>मापनपुस्तिका नोंद – शेटनेटसह (अंतिम मोका तपासणीनंतर)</h4><div class="lines">' +
+  var P3 = '<div class="pg"><h3>प्रपत्र – ९ इ</h3><h4>मापनपुस्तिका नोंद – शेटनेटसह (अंतिम मोका तपासणीनंतर)</h4><div class="lines">' +
     "१. लाभार्थ्याचे नाव :- श्री./श्रीमती " + F("ben.name", "w220") + "<br>&nbsp;&nbsp;&nbsp; गाव " + F("ben.vil", "w140") + " ता. " + F("ben.tal", "w140") + " जि. " + F("ben.dist", "w140") +
     "<br>&nbsp;&nbsp;&nbsp; सर्वे नं. " + F("ben.gat", "w80") + " वर्गवारी (अ.जा./अ/ज./सर्वसाधारण) " + F("ben.cat", "w140") + " मो.नं. " + F("ben.mobile", "w140") +
     "<br>&nbsp;&nbsp;&nbsp; अंक्षांश : " + F("ben.lat", "w140") + " रेखांश : " + F("ben.lng", "w140") +
     "<br>२. बाब – शेटनेटगृह (मार्गदर्शक सूचनेप्रमाणे आकारमान नमूद करावे) " + F("bab.area", "w80") +
-    "<br>३. उभारणीपूर्व प्रथम तपासणीचा दिनांक :- " + F("preDate", "w140") +
+    "<br>३. उभारणीपूर्व प्रथम तपासणीचा दिनांक :- " + F("firstDate", "w140") +
     "<br>४. पूर्वसंमती दिलेले क्षेत्र " + F("pre.area", "w80") + " चौ.मी." +
     "<br>५. पकल्पाचा मोका तपासणी तपशील – उभारणी केलेल्या शेटनेटगृहाचे आकारमान" +
     "<br>&nbsp;&nbsp;&nbsp; ५.१ लांबी " + F("bab.l", "w80") + " मी. रुंदी " + F("bab.w", "w80") + " मी. उंची " + F("bab.h", "w80") + " मी." +
     "<br>&nbsp;&nbsp;&nbsp; ५.२ क्षेत्रफळ " + F("bab.area", "w80") + " चौ.मी. (अ)" +
     "<br>&nbsp;&nbsp;&nbsp; ५.३ ग्रीड " + F("bab.grid", "w80") + " मी.</div>" +
     "<h5>६. कंट्रोल हेड, ठिबक सिंचन व फॉगिंग यंत्रणा यांचे विविध घटकांचे तांत्रिक निकष, परिमाण :–</h5>" + chTable("Control Head (Optional)", RCH) + "</div>";
-  var P4 = '<div class="pg"><div class="no">पान ४</div>' + chTable("Irrigation System", RIR) + chTable("Fogging System", RFG) + "</div>";
-  var P5 = '<div class="pg"><div class="no">पान ५</div><h5>७. ऑप्शनल साहित्याचा विविध घटकांचे तांत्रिक निकष, परिमाण :–</h5><table><tr><th class="w40">Sr.No.</th><th>List of Items & their Specification</th><th class="w80">Unit</th><th class="w80">Quantity as per Guideline</th><th class="w80">Quantity as per Invoice Produced</th><th class="w80">Material as per Technical Specification Yes / No</th></tr>' +
-    ROP.map(function(r, i){ var k = r[0]; return "<tr><td class=c>" + (i + 1) + "</td><td>" + esc(r[1]) + "</td><td class=c>" + F("opt." + k + ".u") + "</td><td>" + F("opt." + k + ".guide") + "</td><td>" + F("opt." + k + ".inv") + "</td><td>" + F("opt." + k + ".yn") + "</td></tr>"; }).join("") + "</table>" +
-    '<div class="cert"><h4 style="margin-top:16px">प्रमाणपत्र</h4><p>१) प्रमाणित करण्यात येते की सदरील लाभार्थ्यास शेडनेटगृह या घटकाचा लाभ यापुर्वी देण्यात आलेला नाही.</p>' +
+  var P4 = '<div class="pg">' + chTable("Irrigation System", RIR) + chTable("Fogging System", RFG) + "</div>";
+  var P5 = '<div class="pg"><h5>७. ऑप्शनल साहित्याचा विविध घटकांचे तांत्रिक निकष, परिमाण :–</h5>' + optTable() + "</div>";
+  var P7 = '<div class="pg">' + '<div class="cert"><h4 style="margin-top:16px">प्रमाणपत्र</h4><p>१) प्रमाणित करण्यात येते की सदरील लाभार्थ्यास शेडनेटगृह या घटकाचा लाभ यापुर्वी देण्यात आलेला नाही.</p>' +
     "<p>२) उभारणी केलेल्या शेडनेटगृहासाठी वापरलेले जीआय पाईप, क्लॅडिंग मटेरियल इ. साहित्याचे तांत्रिक निकष व परिमाण हे मार्गदर्शक सूचनेतील विहित निकष परिमाणाची पुर्तता करतात याची खात्री केली आहे.</p>" +
     "<p>३) वरीलप्रमाणे सर्व साहित्याचे तांत्रिक निकष व परिमाण याची पडताळणी करुन त्याच्या नोंदी मापनपुस्तिकेत नोंदविलेल्या आहेत.</p></div>" + sigBlock() + "</div>";
-  $("doc").innerHTML = P1 + P2 + P3 + P4 + P5;
+  var all = pages5b().concat(pages6k(), [P1, P2, P3, P4, P5, page9eAn(), P7]);
+  $("doc").innerHTML = all.map(function(h, i){ return h.replace('<div class="pg">', '<div class="pg"><div class="no">पान ' + (i + 1) + " / " + all.length + "</div>"); }).join("");
 }
 /* बदल → data (एकाच नावाचे सर्व रकाने एकत्र बदलतात, उदा. नाव पान १ व ३) */
-$("doc").addEventListener("input", function(e){
+function onField(e){
   var f = e.target.getAttribute("data-f"); if(!f) return;
+  if(/^f5\.(sup|cmp)\./.test(f) && M.src && M.src.co) setTimeout(function(){ LS("mb_sup_" + M.src.co, { sup:M.f5.sup, cmp:M.f5.cmp }); }, 0);
   set(f, e.target.value);
   document.querySelectorAll('[data-f="' + f + '"]').forEach(function(x){ if(x !== e.target) x.value = e.target.value; });
   var m = /^(r9a|ch)\.([a-z]+)\.act$/.exec(f);
   if(m){ var base = m[1] === "r9a" ? M.r9a[m[2]].bill : M.ch[m[2]].s; e.target.classList.toggle("diff", base !== "" && e.target.value !== base); }
   draft();
-});
+}
+$("doc").addEventListener("input", onField); $("doc").addEventListener("change", function(e){ if(e.target.tagName === "SELECT") onField(e); });
 var DT = null; function draft(){ clearTimeout(DT); DT = setTimeout(function(){ LS("mb_draft", M); }, 600); }
 
 /* ---------- QR शोधणे (फोटो / scan / PDF) ---------- */
@@ -390,7 +632,7 @@ $("file").onchange = function(e){
 function openQR(t, how){
   var d = parseQR(t); if(!d){ status("❌ हा QR MB चा नाही किंवा अपूर्ण आहे.", "err"); return false; }
   var L = LS("mb_list") || [], ex = L.filter(function(x){ return x.src && x.src.no === d.no && x.src.co === d.co; })[0];
-  if(ex && confirm("Invoice " + d.no + " (" + d.name + ") चे MB आधीच जतन आहे.\n\nOK = तेच उघडा (तुमचे बदल सोबत)\nCancel = बिलावरून नवीन भरा")){ M = ex; }
+  if(ex && confirm("Invoice " + d.no + " (" + d.name + ") चे MB आधीच जतन आहे.\n\nOK = तेच उघडा (तुमचे बदल सोबत)\nCancel = बिलावरून नवीन भरा")){ M = mig(ex); }
   else M = fromQR(d);
   render(); status("✔ QR वाचला — " + esc(d.name) + " · " + esc(d.vil) + " · Invoice " + esc(d.no) + ". खाली MB भरले आहे.", "ok");
   setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
@@ -604,6 +846,7 @@ function save(){
   if(LS("mb_list", L)) status("💾 जतन झाले — " + esc(M.ben.name || "MB") + ". (फक्त या फोनमध्ये)", "ok"); else alert("जतन झाले नाही — browser storage बंद आहे.");
 }
 $("bSave").onclick = save;
+$("bCalc").onclick = function(){ if(M) calcAn(); };
 function renderList(){
   var q = $("q").value.trim().toLowerCase(), L = (LS("mb_list") || []).filter(function(x){ return !q || [x.ben.name, x.ben.vil, x.src && x.src.no].join(" ").toLowerCase().indexOf(q) >= 0; });
   $("list").innerHTML = L.length ? L.map(function(x){ return '<div class="it"><div class="m"><b>' + esc(x.ben.name || "(नाव नाही)") + "</b><small>" + esc(x.ben.vil || "") + (x.src ? " · Invoice " + esc(x.src.no) + " · " + esc(x.src.coName) : " · हाताने") + " · " + esc(x.bab.type || "") + " " + esc(x.bab.area || "") + " चौ.मी. · जतन " + new Date(x.at).toLocaleDateString("en-IN") + '</small></div><button type="button" class="btn" data-o="' + esc(x.id) + '">उघडा</button><button type="button" class="btn" data-d="' + esc(x.id) + '" aria-label="काढा" style="color:#a3321c">🗑</button></div>'; }).join("") : '<p class="hint">अजून काही जतन केलेले नाही.</p>';
@@ -611,7 +854,7 @@ function renderList(){
 $("q").oninput = renderList;
 $("list").onclick = function(e){
   var o = e.target.getAttribute("data-o"), d = e.target.getAttribute("data-d"), L = LS("mb_list") || [];
-  if(o){ M = L.filter(function(x){ return x.id === o; })[0]; $("cList").hidden = true; $("cLoad").hidden = false; render(); $("cInfo").scrollIntoView(); }
+  if(o){ M = mig(L.filter(function(x){ return x.id === o; })[0]); $("cList").hidden = true; $("cLoad").hidden = false; render(); $("cInfo").scrollIntoView(); }
   if(d && confirm("हे MB या फोनमधून काढायचे?")){ LS("mb_list", L.filter(function(x){ return x.id !== d; })); renderList(); }
 };
 $("bList").onclick = function(){ var h = !$("cList").hidden; $("cList").hidden = h; if(!h){ renderList(); $("cList").scrollIntoView({ behavior:"smooth" }); } };
@@ -625,7 +868,7 @@ $("bPrint").onclick = doPrint; $("bPrint2").onclick = doPrint;
 
 /* ---------- फोन Camera ने QR scan → link ने हे पान उघडले ---------- */
 if(/MB[12]\|/.test(decodeHash(location.hash))){ openQR(location.hash, "link"); try{ history.replaceState(null, "", location.pathname); }catch(e){} }
-else { var dr = LS("mb_draft"); if(dr && dr.ben){ M = dr; render(); status("मागील अपूर्ण MB उघडले (" + esc(dr.ben.name || "") + "). नवीन बिलासाठी \"📥 नवीन बिल\".", "warn"); } }
+else { var dr = LS("mb_draft"); if(dr && dr.ben){ M = mig(dr); render(); status("मागील अपूर्ण MB उघडले (" + esc(dr.ben.name || "") + "). नवीन बिलासाठी \"📥 नवीन बिल\".", "warn"); } }
 })();
 </script>
 </body>
