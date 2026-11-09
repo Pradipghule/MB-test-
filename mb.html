@@ -7,7 +7,7 @@
 <style>
   :root{--g:#1d5b2f;--g2:#2a7a41;--bg:#eef2ec;--line:#cfd8cb;--mut:#5b665e;--err:#a3321c;--warn:#fff4dc}
   *{box-sizing:border-box}
-  html,body{margin:0;-webkit-text-size-adjust:100%}
+  html,body{margin:0;-webkit-text-size-adjust:100%;overflow-x:clip}
   body{font-family:"Nirmala UI","Noto Sans Devanagari","Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:#1a1a1a;font-size:15px}
   header.top{background:var(--g);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;position:sticky;top:0;z-index:20}
   .top-in{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
@@ -181,6 +181,7 @@
   <!-- MB संदर्भ -->
   <section class="card noprint" id="cInfo" hidden>
     <div class="alert ok" id="srcInfo"></div>
+    <div class="alert warn" id="mrInfo" hidden>🔤 बिलातील नाव, गाव, तालुका, जिल्हा मराठीत रूपांतरित केले — एकदा तपासा (निळे अक्षर बदलता येते). <button type="button" class="btn" id="bMrUndo" style="min-height:34px;padding:4px 10px;margin-left:6px">English परत</button></div>
     <p class="hint">निळ्या अक्षरातील सर्व माहिती बदलता येते. <b>"प्रत्यक्ष मोजमापाप्रमाणे"</b> रकान्यात बिलातील परिमाण आधीच भरले आहे — मोजमाप वेगळे आल्यास बदला (पिवळे दिसेल).</p>
     <div class="pct">
       <label for="pctTop"><b>अनुदान टक्के (%)</b></label>
@@ -199,6 +200,7 @@
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn pri" id="bSave">💾 जतन करा</button>
       <button type="button" class="btn pri" id="bPrint2">🖨 Print / PDF</button>
+      <button type="button" class="btn" id="bMr">🔤 नावे मराठीत करा</button>
       <button type="button" class="btn" id="bCalc">🧮 अनुदान हिशोब पुन्हा करा</button>
     </div>
     <p class="hint">एकूण १७ पाने: प्रपत्र ५ ब — प्रथम मोका तपासणी (पान १–४) · प्रपत्र ६ क — अंतिम मोका तपासणी व अनुदान परिगणना (पान ५–१०) · प्रपत्र ९ क (पान ११–१२) · प्रपत्र ९ इ (पान १३–१७). अनुदान: "Amount As per Bill", Cost Norm व टक्के भरताच पुढचा हिशोब आपोआप भरतो (सर्व आकडे बदलता येतात). Cost Norm व "ड" वरील "📏 मार्गदर्शक दर" मधील निवडीप्रमाणे Guideline 2025-26 च्या तक्त्यांतून आपोआप येतात.</p>
@@ -283,9 +285,10 @@ function decodeHash(h){ try{ return decodeURIComponent(String(h).replace(/\+/g, 
 function fromQR(d){
   var m = blankMB(), q = d.q; m.f6 = { st:{}, ch:{}, ir:{}, fg:{} };
   m.src = { co:d.co, coName:CO[d.co] || d.co || "", no:d.no, date:d.date, amt:d.amt, tpl:d.tpl, ocr:!!d.ocr };
-  m.ben = { name:d.name, vil:d.vil, tal:d.tal, dist:d.dist, gat:d.gat, mobile:d.mobile, cat:"", lat:"", lng:"" };
+  m.ben = { name:String(d.name || "").replace(/^\s*(श्रीमती|श्री|shrimati|shri|smt|mrs|mr)\.?\s+/i, ""), vil:d.vil, tal:d.tal, dist:d.dist, gat:d.gat, mobile:d.mobile, cat:"", lat:"", lng:"" };
   m.bab = { type:d.model, area:d.area, grid:"", l:d.l, w:d.w, h:d.h };
   m.scheme = d.scheme; m.pre = { no:d.pre, date:"", area:d.area };
+  if(d.mark) m.f5.markTxt = d.mark;
   R9A.forEach(function(r){ var v = q[r[0]]; if(v){ m.r9a[r[0]].bill = fmtQ(v); m.r9a[r[0]].act = fmtQ(v); } });
   var chq = { bed:q.bed ? (q.bed >= 6 ? q.bed : q.bed * 6) : 0, disc:q.disc || q.scrn };
   RCH.concat(RIR, RFG).forEach(function(r){ var v = chq[r[0]] != null ? chq[r[0]] : q[r[0]]; if(v){ m.ch[r[0]].s = fmtQ(v); m.ch[r[0]].act = fmtQ(v); } });
@@ -297,6 +300,7 @@ function fromQR(d){
   RFG.forEach(function(r){ if(m.ch[r[0]].s) m.f6.fg[r[0]] = { sp:r[0] === "flat" ? "Polytube" : /main|sub/.test(r[0]) ? "PVC" : "—", yn:"Yes" }; });
   /* अनुदान — बिलातील रक्कम (हिशोब नाही) */
   var A = d.amt || {}; ["s","c","d","e","f"].forEach(function(k){ if(A[k]) m.an[k] = { amt:Number(A[k]).toLocaleString("en-IN") }; });
+  if(A.g && !["s","c","d","e","f"].some(function(k){ return A[k]; })) m.an.B = Number(A.g).toLocaleString("en-IN");   /* भागनिहाय रक्कम नसल्यास एकूण बिल = ब */
   if(d.no) m.an.billNo = d.no + (d.date ? " / " + dmy(d.date) : "");
   m.an.inv = CO[d.co] || "";
   /* पुरवठादाराची माहिती — याच कंपनीसाठी मागच्या वेळी भरलेली */
@@ -613,14 +617,16 @@ function calcAn(quiet, editing){
     if(k === "f"){ var sm = 0, has = 0; for(var j = 1; j <= ANO.length; j++){ var o = r["o" + j]; if(o){ var x = row(o, base + "o" + j + "."); if(x.amt != null){ sm += x.amt; has = 1; } } } if(has) put(base + "amt", inr(sm)); }
     var v = row(r, base); if(v.amt != null){ tot.amt += v.amt; any = 1; } if(v.nA != null) tot.nAmt += v.nA; if(v.rec != null) tot.rec += v.rec; if(v.norm != null) normSum += v.norm;
   });
+  if(!any && /\.amt$/.test(editing || "")) ["an.tot.amt","an.tot.rec","an.B"].forEach(function(f){ set(f, ""); });
   if(any){ put("an.tot.amt", inr(tot.amt)); if(tot.nAmt) put("an.tot.nAmt", inr(tot.nAmt)); put("an.tot.rec", inr(tot.rec)); put("an.B", inr(tot.amt)); }
   var B = any ? tot.amt : num(an.B);
   var K = B != null && area ? B / area : null; if(K != null) put("an.K", inr(K, 2));
   if(normSum) put("an.D", inr(normSum, 2));
-  var D = normSum || num(an.D), I = K != null && D != null ? Math.min(K, D) : (K != null ? K : D);
+  var D = normSum || num(an.D), I = K != null && D != null ? Math.min(K, D) : K;   /* बिलाची रक्कम (ब) नसल्यास क, इ, फ, अनुदान काढत नाही */
   if(I != null) put("an.I", inr(I, 2));
   if(D != null && area) put("an.A", inr(Math.round(D * area)));
-  var Ph = I != null && area ? Math.round(I * area) : num(an.Ph); if(I != null && area) put("an.Ph", inr(Ph));
+  if(K == null) ["an.K","an.I","an.Ph","an.sub","an.words"].forEach(function(f){ if(f !== editing) set(f, ""); });
+  var Ph = I != null && area ? Math.round(I * area) : null; if(Ph != null) put("an.Ph", inr(Ph));
   var pct = num(an.pct);
   if(Ph != null && pct != null){ var sub = Math.round(Ph * pct / 100); put("an.sub", inr(sub)); put("an.words", mrWords(sub) + " रुपये मात्र"); }
   if(quiet){ syncAn(editing); draft(); return; }
@@ -632,6 +638,62 @@ function calcAn(quiet, editing){
 function syncAn(editing){
   document.querySelectorAll('[data-f^="an."]').forEach(function(x){ var f = x.getAttribute("data-f"); if(f === editing || x === document.activeElement) return; var v = get(f); x.value = v == null ? "" : v; });
 }
+
+/* ---------- 🔤 इंग्रजी नावे → मराठी (बिलातील नाव / गाव / तालुका / जिल्हा) ----------
+   क्रम: १) नेहमीच्या नावांचा शब्दकोश  २) Google Input Tools (Internet असल्यास)  ३) अक्षरानुसार नियम. अधिकारी बदलू शकतात. */
+var MRD = (function(){ var o = {}, s = "rao:राव,patil:पाटील,raut:राऊत,pawar:पवार,jadhav:जाधव,shinde:शिंदे,deshmukh:देशमुख,kale:काळे,more:मोरे,gaikwad:गायकवाड,ghule:घुले,sahebrao:साहेबराव,vishal:विशाल,pradip:प्रदीप,pradeep:प्रदीप,budha:बुधा,nashik:नाशिक,nasik:नाशिक,dindori:दिंडोरी,rahata:राहाता,ahilyanagar:अहिल्यानगर,ahmednagar:अहमदनगर,ahmadnagar:अहमदनगर,pune:पुणे,kasbe:कसबे,vani:वणी,wani:वणी,pimplas:पिंपळस,kopargaon:कोपरगाव,sangamner:संगमनेर,shrirampur:श्रीरामपूर,rahuri:राहुरी,newasa:नेवासा,shevgaon:शेवगाव,niphad:निफाड,sinnar:सिन्नर,yeola:येवला,yevla:येवला,malegaon:मालेगाव,satana:सटाणा,baglan:बागलाण,kalwan:कळवण,chandwad:चांदवड,igatpuri:इगतपुरी,trimbakeshwar:त्र्यंबकेश्वर,trimbak:त्र्यंबक,peth:पेठ,surgana:सुरगाणा,deola:देवळा,nandgaon:नांदगाव,jalgaon:जळगाव,dhule:धुळे,aurangabad:औरंगाबाद,sambhajinagar:संभाजीनगर,chhatrapati:छत्रपती,satara:सातारा,sangli:सांगली,solapur:सोलापूर,kolhapur:कोल्हापूर,beed:बीड,latur:लातूर,jalna:जालना,parbhani:परभणी,nanded:नांदेड,buldhana:बुलढाणा,akola:अकोला,amravati:अमरावती,nagpur:नागपूर,thane:ठाणे,palghar:पालघर,raigad:रायगड,ratnagiri:रत्नागिरी,ramesh:रमेश,suresh:सुरेश,mahesh:महेश,ganesh:गणेश,santosh:संतोष,sunil:सुनील,anil:अनिल,vijay:विजय,sanjay:संजय,ajay:अजय,dattatray:दत्तात्रय,dattatraya:दत्तात्रय,balasaheb:बाळासाहेब,bhausaheb:भाऊसाहेब,annasaheb:अण्णासाहेब,babasaheb:बाबासाहेब,nanasaheb:नानासाहेब,appasaheb:आप्पासाहेब,nana:नाना,bhau:भाऊ,kisan:किसन,shankar:शंकर,vitthal:विठ्ठल,dnyaneshwar:ज्ञानेश्वर,dnyandev:ज्ञानदेव,sopan:सोपान,prakash:प्रकाश,ashok:अशोक,ravindra:रवींद्र,rajendra:राजेंद्र,nitin:नितीन,sachin:सचिन,rahul:राहुल,amol:अमोल,yogesh:योगेश,sandip:संदीप,sandeep:संदीप,dipak:दीपक,deepak:दीपक,kailas:कैलास,sharad:शरद,madhukar:मधुकर,bapu:बापू,shivaji:शिवाजी,sambhaji:संभाजी,tukaram:तुकाराम,eknath:एकनाथ,laxman:लक्ष्मण,lakshman:लक्ष्मण,maruti:मारुती,popat:पोपट,kashinath:काशिनाथ,namdev:नामदेव,bhimrao:भीमराव,haribhau:हरिभाऊ,bhagwan:भगवान,bhaskar:भास्कर,dilip:दिलीप,manoj:मनोज,sagar:सागर,kiran:किरण,tushar:तुषार,swapnil:स्वप्नील,akash:आकाश,vikas:विकास,vilas:विलास,vasant:वसंत,uttam:उत्तम,arun:अरुण,raju:राजू,raju:राजू,somnath:सोमनाथ,gorakh:गोरख,machhindra:मच्छिंद्र,kulkarni:कुलकर्णी,kadam:कदम,salunkhe:साळुंखे,thorat:थोरात,bhosale:भोसले,chavan:चव्हाण,wagh:वाघ,sonawane:सोनवणे,gite:गिते,sangale:सांगळे,aher:आहेर,pagar:पगार,borse:बोरसे,kshirsagar:क्षीरसागर,bhujbal:भुजबळ,darade:दराडे,kakad:काकड,nikam:निकम,ahire:अहिरे,gaware:गवारे,kote:कोते,avhad:आव्हाड,sanap:सानप,bodke:बोडके,kharde:खर्डे,kute:कुटे,lokhande:लोखंडे,waje:वाजे,kokate:कोकाटे,gade:गाडे,kasar:कासार,zende:झेंडे,dhatrak:धात्रक,pingle:पिंगळे,ugale:उगले,ghuge:घुगे,tambe:तांबे,shelke:शेळके,khairnar:खैरनार,dighe:दिघे,bachhav:बच्छाव,thakare:ठाकरे,thackeray:ठाकरे,mali:माळी,deore:देवरे,suryavanshi:सूर्यवंशी,gangurde:गांगुर्डे,gavit:गावित,bhoye:भोये,pawara:पावरा,mahale:महाले,jagtap:जगताप,kokane:कोकणे,shelar:शेलार,gunjal:गुंजाळ,dhokane:ढोकणे,kanhore:कन्होरे,katkar:काटकर,desai:देसाई,deshpande:देशपांडे,joshi:जोशी,shaikh:शेख,sheikh:शेख,pathan:पठाण,inamdar:इनामदार,sayyed:सय्यद,khan:खान,mohammad:मोहम्मद,shri:श्री,smt:श्रीमती,shrimati:श्रीमती,mr:श्री,mrs:श्रीमती".split(",");
+  s.forEach(function(x){ var a = x.split(":"); o[a[0]] = a[1]; }); return o; })();
+var TRC = [["ksh","क्ष"],["dny","ज्ञ"],["gny","ज्ञ"],["chh","छ"],["kh","ख"],["gh","घ"],["ch","च"],["jh","झ"],["th","थ"],["dh","ध"],["ph","फ"],["bh","भ"],["sh","श"],["k","क"],["g","ग"],["j","ज"],["t","त"],["d","द"],["n","न"],["p","प"],["f","फ"],["b","ब"],["m","म"],["y","य"],["r","र"],["l","ल"],["v","व"],["w","व"],["s","स"],["h","ह"],["z","झ"],["c","क"],["q","क"],["x","क्स"]];
+var TRV = [["aa","आ","ा"],["ai","ऐ","ै"],["au","औ","ौ"],["ee","ई","ी"],["oo","ऊ","ू"],["a","अ",""],["i","इ","ि"],["u","उ","ु"],["e","ए","े"],["o","ओ","ो"]];
+function ruleTr(w){
+  w = w.toLowerCase().replace(/aon$/, "ao"); var out = "", i = 0, pc = false;
+  function m(list){ for(var k = 0; k < list.length; k++) if(w.substr(i, list[k][0].length) === list[k][0]) return list[k]; return null; }
+  while(i < w.length){
+    var v = m(TRV);
+    if(v){ var last = i + v[0].length >= w.length;
+      if(pc){ out += (v[0] === "a" && last) ? "ा" : (v[0] === "i" && last) ? "ी" : (v[0] === "a" && w.substr(i + 1, 1) === "o" && i + 2 >= w.length) ? "ाव" : v[2]; if(v[0] === "a" && w.substr(i + 1, 1) === "o" && i + 2 >= w.length) i++; }
+      else out += v[1];
+      i += v[0].length; pc = false; continue; }
+    var c = m(TRC);
+    if(c){ var nx = w.substr(i + c[0].length, 1);
+      if(pc) out += "्";
+      if((c[0] === "n" || c[0] === "m") && !pc && /[bcdfghjklmnpqrstvwxyz]/.test(nx) && i > 0){ out += "ं"; i += 1; pc = false; continue; }
+      out += c[1]; i += c[0].length; pc = true; continue; }
+    out += w[i]; i++; pc = false;
+  }
+  return out;
+}
+function isDev(s){ return /[ऀ-ॿ]/.test(s); }
+var MRC = {};
+function googleTr(word){
+  if(MRC[word]) return Promise.resolve(MRC[word]);
+  if(!navigator.onLine || typeof fetch !== "function") return Promise.reject();
+  var ctl = typeof AbortController === "function" ? new AbortController() : null, tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 4000);
+  return fetch("https://inputtools.google.com/request?text=" + encodeURIComponent(word) + "&itc=mr-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage", ctl ? { signal:ctl.signal } : {})
+    .then(function(r){ return r.json(); }).then(function(j){ clearTimeout(tm); var t = j && j[0] === "SUCCESS" && j[1] && j[1][0] && j[1][0][1] && j[1][0][1][0]; if(!t || !isDev(t)) throw 0; MRC[word] = t; return t; });
+}
+function trWord(w){
+  var lw = w.toLowerCase().replace(/[^a-z]/g, "");
+  if(!lw) return Promise.resolve(w);
+  if(MRD[lw]) return Promise.resolve(MRD[lw]);
+  return googleTr(lw).catch(function(){ return ruleTr(lw); });
+}
+function toMr(text){
+  var s = String(text || "").trim(); if(!s || isDev(s) && !/[A-Za-z]/.test(s)) return Promise.resolve(s);
+  var parts = s.split(/(\s+|[.,\/\-()])/);
+  return Promise.all(parts.map(function(p){ return /[A-Za-z]/.test(p) ? trWord(p) : Promise.resolve(p); })).then(function(a){ return a.join("").replace(/\s+/g, " ").trim(); });
+}
+var MRF = ["ben.name","ben.vil","ben.tal","ben.dist"];
+function mrNames(force){
+  if(!M) return Promise.resolve();
+  var m = M; m.ben.en = m.ben.en || {};
+  return Promise.all(MRF.map(function(f){ var k = f.split(".")[1], v = m.ben[k];
+    if(!v || !/[A-Za-z]/.test(v)) return null;
+    m.ben.en[k] = v; return toMr(v).then(function(t){ if(M === m && t) m.ben[k] = t; return t; }); }))
+    .then(function(r){ if(M !== m || !r.some(Boolean)) return; render(); draft();
+      $("mrInfo").hidden = false; });
+}
+function mrUndo(){ if(!M || !M.ben.en) return; Object.keys(M.ben.en).forEach(function(k){ M.ben[k] = M.ben.en[k]; }); M.ben.en = {}; render(); draft(); $("mrInfo").hidden = true; }
 
 function render(){
   if(!M){ $("doc").innerHTML = ""; $("cInfo").hidden = true; $("bPrint").hidden = true; return; }
@@ -759,12 +821,12 @@ function openQR(t, how){
   var L = LS("mb_list") || [], ex = L.filter(function(x){ return x.src && x.src.no === d.no && x.src.co === d.co; })[0];
   if(ex && confirm("Invoice " + d.no + " (" + d.name + ") चे MB आधीच जतन आहे.\n\nOK = तेच उघडा (तुमचे बदल सोबत)\nCancel = बिलावरून नवीन भरा")){ M = mig(ex); }
   else { M = fromQR(d); guideInit(M); }
-  render(); calcAn(true); status("✔ QR वाचला — " + esc(d.name) + " · " + esc(d.vil) + " · Invoice " + esc(d.no) + ". खाली MB भरले आहे.", "ok");
+  render(); calcAn(true); mrNames(); status("✔ QR वाचला — " + esc(d.name) + " · " + esc(d.vil) + " · Invoice " + esc(d.no) + ". खाली MB भरले आहे.", "ok");
   setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
   return true;
 }
 $("bPaste").onclick = function(){ if(!openQR($("paste").value, "paste")) return; $("paste").value = ""; };
-$("bBlank").onclick = function(){ M = blankMB(); M.gd = { ar:"g", gi:"1", roof:"mono" }; render(); status("✍ कोरे MB उघडले.", "ok"); };
+$("bBlank").onclick = function(){ if(M) save(); M = blankMB(); M.gd = { ar:"g", gi:"1", roof:"mono" }; render(); status("✍ कोरे MB उघडले.", "ok"); };
 
 /* ---------- 🔍 QR नसल्यास: OCR (बिलातील अक्षरे वाचणे) → अधिकाऱ्याने तपासून MB ---------- */
 var LASTC = [], OCRR = null;
@@ -845,6 +907,8 @@ var OCRP = (function(){
     if(/kisan\s*agro/i.test(t)) h.co = "kas"; else if(/sahyadri/i.test(t)) h.co = "sghc";
     if((m = /Farmer\s*Name\s*[:;]?\s*(.+?)(?=\s{2,}|\s+Model\b|\n|$)/i.exec(t))) h.name = m[1].trim();
     if((m = /At\s*\/?\s*Post\s*[-:]?\s*([^,\n]+),\s*Tal[\s.\-:]*([^,\n]+),\s*Dist[\s.\-:]*([^.\n,]+)/i.exec(t))){ h.vil = m[1].trim(); h.tal = m[2].trim(); h.dist = m[3].replace(/\s+Type.*$/i, "").trim(); }
+    if(!h.vil && (m = /(?:मु\.?\s*पो\.?|मु\.?\s*\/\s*पो\.?)\s*[-:]?\s*([^,\n]+),\s*ता\.?\s*[-:]?\s*([^,\n]+),\s*जि\.?\s*[-:]?\s*([^.\n,]+)/.exec(t))){ h.vil = m[1].trim(); h.tal = m[2].trim(); h.dist = m[3].trim(); }
+    if((m = /Marking\s*Code\s*[:;]?\s*([A-Za-z0-9][A-Za-z0-9\-\/]{4,})/i.exec(t))) h.mark = m[1];
     if((m = /Mobile\s*No\s*[:;]?\s*(\d{10})/i.exec(t))) h.mobile = m[1];
     if((m = /Survey\s*No\s*\/?\s*Gat\s*No\s*[:;]?\s*([0-9A-Za-z\/\-]+)/i.exec(t))) h.gat = m[1];
     if((m = /Presanction\s*No\s*[:;]?\s*([0-9]{4}\s*-\s*[0-9]{2}\s*\/\s*[0-9]+)/i.exec(t))) h.pre = m[1].replace(/\s/g, "");
@@ -863,6 +927,7 @@ var OCRP = (function(){
     if(st.F == null && gt && st.A != null && st.B != null && st.C != null && st.D != null && st.E != null){ var f = gt - st.A - st.B - st.C - st.D - st.E; if(f > 0.5) st.F = f; }
     var R = function(v){ return v == null ? "" : String(Math.round(v)); };
     if(st.A != null || st.B != null) h.amt_s = R((st.A || 0) + (st.B || 0));
+    if(gt) h.amt_g = R(gt);
     if(st.C != null) h.amt_c = R(st.C); if(st.D != null) h.amt_d = R(st.D); if(st.E != null) h.amt_e = R(st.E); if(st.F != null) h.amt_f = R(st.F);
     return h;
   }
@@ -945,11 +1010,20 @@ function runOCR(canvases){
   }).then(function(){
     if(worker) worker.terminate();
     OCRR = OCRP.merge(texts.filter(function(t){ return t.length; }).map(function(t){ return t.join("\n"); }));
+    var h = OCRR.head, bad = function(v){ return !v || !/[A-Za-z\u0900-\u097F]{2}/.test(v); };
+    if(!bad(h.name) && !bad(h.vil)) return;
+    /* नाव / पत्ता मराठीत (देवनागरी) असल्यास: पहिल्या पानाचा वरचा भाग मराठी + इंग्रजी OCR ने परत वाचा */
+    status("🔍 शेतकऱ्याचे नाव / पत्ता मराठीत वाचत आहे…");
+    var c0 = pages[0], top = document.createElement("canvas"); top.width = c0.width; top.height = Math.round(c0.height * 0.45); top.getContext("2d").drawImage(c0, 0, 0);
+    return window.Tesseract.createWorker(["eng","mar"], 1).then(function(w2){
+      return w2.recognize(ocrCanvas(top)).then(function(r){ var h2 = OCRP.header(r.data.text || ""); ["name","vil","tal","dist","mobile","gat","pre","mark"].forEach(function(k){ if(bad(h[k]) && h2[k]) h[k] = h2[k]; }); }).then(function(){ w2.terminate(); }, function(){ w2.terminate(); });
+    }).catch(function(){});
+  }).then(function(){
     showOCR(OCRR, pages);
   }).catch(function(e){ if(worker) try{ worker.terminate(); }catch(x){} var why = errText(e); status("❌ बिल वाचता आले नाही (" + esc(why) + ").<br>" + (/worker|security|insecure|denied|null/i.test(why) ? PREVIEW_MSG : "Internet तपासून परत प्रयत्न करा, किंवा \"कोरे MB\" वापरून हाताने भरा."), "err"); });
 }
 function showOCR(r, pages){
-  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"],["amt_s","रक्कम ₹ — Shadenet Structure (A+B)"],["amt_c","रक्कम ₹ — Irrigation (C)"],["amt_d","रक्कम ₹ — Fogging (D)"],["amt_e","रक्कम ₹ — Control Head (E)"],["amt_f","रक्कम ₹ — Optional (F)"]];
+  var h = r.head || {}, HF = [["name","शेतकऱ्याचे नाव"],["vil","गाव"],["tal","तालुका"],["dist","जिल्हा"],["gat","गट / सर्वे नं."],["mobile","मोबाईल"],["pre","पूर्वसंमती क्र."],["mark","Marking Code"],["scheme","योजना"],["model","प्रकार (Model)"],["w","रुंदी (मी.)"],["l","लांबी (मी.)"],["area","क्षेत्र (चौ.मी.)"],["h","उंची (मी.)"],["no","Invoice No."],["date","Invoice दिनांक (YYYY-MM-DD)"],["amt_s","रक्कम ₹ — Shadenet Structure (A+B)"],["amt_c","रक्कम ₹ — Irrigation (C)"],["amt_d","रक्कम ₹ — Fogging (D)"],["amt_e","रक्कम ₹ — Control Head (E)"],["amt_f","रक्कम ₹ — Optional (F)"],["amt_g","एकूण बिल ₹ (Grand Total)"]];
   $("ocrHead").innerHTML = HF.map(function(f){ return '<label class="l">' + f[1] + ' <input class="inp" data-h="' + f[0] + '" value="' + esc(h[f[0]] || "") + '"></label>'; }).join("");
   var found = 0, sure = 0;
   $("ocrRows").innerHTML = OKEYS.map(function(k){ var it = r.items[k] || { q:null, conf:0 }, c = it.q == null ? 0 : it.conf; if(it.q != null) found++; if(c === 2) sure++;
@@ -965,10 +1039,10 @@ $("bOcrOk").onclick = function(){
   var d = { ocr:true, q:{}, amt:{} };
   document.querySelectorAll("#ocrHead [data-h]").forEach(function(x){ d[x.getAttribute("data-h")] = x.value.trim(); });
   d.co = OCRR && OCRR.head.co || ""; d.tpl = "";
-  ["s","c","d","e","f"].forEach(function(k){ var v = num(d["amt_" + k]); if(v) d.amt[k] = v; delete d["amt_" + k]; });
+  ["s","c","d","e","f","g"].forEach(function(k){ var v = num(d["amt_" + k]); if(v) d.amt[k] = v; delete d["amt_" + k]; });
   document.querySelectorAll("#ocrRows [data-k]").forEach(function(x){ var v = parseFloat(String(x.value).replace(/,/g, "")); if(isFinite(v) && v > 0) d.q[x.getAttribute("data-k")] = v; });
   if(!d.area && d.w && d.l) d.area = String(Math.round(parseFloat(d.w) * parseFloat(d.l)));
-  M = fromQR(d); guideInit(M); render(); calcAn(true); $("cOcr").hidden = true;
+  M = fromQR(d); guideInit(M); render(); calcAn(true); mrNames(); $("cOcr").hidden = true;
   status("✔ तपासलेली माहिती MB मध्ये भरली — " + esc(d.name || "") + ". प्रत्यक्ष मोजमाप तपासा.", "ok");
   setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
 };
@@ -981,6 +1055,8 @@ function save(){
 }
 $("bSave").onclick = save;
 $("bCalc").onclick = function(){ if(M) calcAn(); };
+$("bMr").onclick = function(){ mrNames(true); };
+$("bMrUndo").onclick = mrUndo;
 /* A4 पान पूर्ण स्क्रीनमध्ये (फोनवर लहान करून) — "मोठे करा" ने खरी साईझ */
 var BIG = false;
 function fitPages(){
@@ -1018,7 +1094,14 @@ $("list").onclick = function(e){
   if(d && confirm("हे MB या फोनमधून काढायचे?")){ LS("mb_list", L.filter(function(x){ return x.id !== d; })); renderList(); }
 };
 $("bList").onclick = function(){ var h = !$("cList").hidden; $("cList").hidden = h; if(!h){ renderList(); $("cList").scrollIntoView({ behavior:"smooth" }); } };
-$("bLoad").onclick = function(){ $("cLoad").hidden = false; window.scrollTo({ top:0, behavior:"smooth" }); $("file").click(); };
+$("bLoad").onclick = function(){
+  var was = "";
+  if(M){ save(); was = M.ben.name || "MB"; }
+  M = null; try{ localStorage.removeItem("mb_draft"); }catch(e){}
+  render(); $("cOcr").hidden = true; $("cList").hidden = true; $("cLoad").hidden = false; $("paste").value = "";
+  status(was ? "💾 मागील MB (" + esc(was) + ") जतन झाले — \"📋 जतन केलेले\" मध्ये मिळेल. आता नवीन बिल निवडा." : "", "ok");
+  window.scrollTo({ top:0, behavior:"smooth" }); $("file").click();
+};
 function doPrint(){ if(!M) return; save(); var t = document.title; document.title = "MB - " + (M.ben.name || "") + " - " + (M.src ? M.src.no.replace(/\//g, "-") : ""); setTimeout(function(){ window.print(); document.title = t; }, 200); }
 $("bPrint").onclick = doPrint; $("bPrint2").onclick = doPrint;
 
