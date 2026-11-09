@@ -117,6 +117,12 @@
   .pdfstage{position:fixed;left:0;top:0;width:794px;height:1123px;overflow:hidden;z-index:-1;background:#fff;pointer-events:none}
   .pdfstage .pg{margin:0 !important;box-shadow:none !important;transform:none !important}
   .pdfstage .f{color:#000}
+  .pdfstage .fv{display:inline-block;border-bottom:1px dotted #777;padding:0 3px;font-weight:600;color:#000;line-height:1.35;vertical-align:baseline;white-space:normal;overflow-wrap:break-word}
+  .pdfstage .fv.td{display:block;border:0;text-align:center;padding:1px 2px;min-height:1.35em}
+  .pdfstage .fv.td.left{text-align:left}
+  .pdfstage .fv.ta{font-size:11px;line-height:1.25;white-space:pre-wrap}
+  .pdfstage .fv.ph{font-weight:600}
+  .pdfstage .q .fv{flex:0 0 auto;min-width:84px !important;text-align:center}
   .pdfstage .f.diff{background:none}
   .pgw{margin:0 auto 14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.12)}
   .pgw .pg{transform-origin:0 0;margin:0;box-shadow:none}
@@ -306,7 +312,7 @@ function fromQR(d){
   /* अनुदान — बिलातील रक्कम (हिशोब नाही) */
   var A = d.amt || {}; ["s","c","d","e","f"].forEach(function(k){ if(A[k]) m.an[k] = { amt:Number(A[k]).toLocaleString("en-IN") }; });
   if(A.g && !["s","c","d","e","f"].some(function(k){ return A[k]; })) m.an.B = Number(A.g).toLocaleString("en-IN");   /* भागनिहाय रक्कम नसल्यास एकूण बिल = ब */
-  if(d.no) m.an.billNo = d.no + (d.date ? " / " + dmy(d.date) : "");
+  if(d.no) m.an.billNo = d.no + (d.date ? "\n" + dmy(d.date) : "");
   m.an.inv = CO[d.co] || "";
   /* पुरवठादाराची माहिती — याच कंपनीसाठी मागच्या वेळी भरलेली */
   var sup = d.co && LS("mb_sup_" + d.co); m.f5.sup = sup && sup.sup || { name:CO[d.co] ? "मे. " + CO[d.co] : "" }; m.f5.cmp = sup && sup.cmp || {};
@@ -913,6 +919,7 @@ var OCRP = (function(){
     if((m = /Farmer\s*Name\s*[:;]?\s*(.+?)(?=\s{2,}|\s+Model\b|\n|$)/i.exec(t))) h.name = m[1].trim();
     if((m = /At\s*\/?\s*Post\s*[-:]?\s*([^,\n]+),\s*Tal[\s.\-:]*([^,\n]+),\s*Dist[\s.\-:]*([^.\n,]+)/i.exec(t))){ h.vil = m[1].trim(); h.tal = m[2].trim(); h.dist = m[3].replace(/\s+Type.*$/i, "").trim(); }
     if(!h.vil && (m = /(?:मु\.?\s*पो\.?|मु\.?\s*\/\s*पो\.?)\s*[-:]?\s*([^,\n]+),\s*ता\.?\s*[-:]?\s*([^,\n]+),\s*जि\.?\s*[-:]?\s*([^.\n,]+)/.exec(t))){ h.vil = m[1].trim(); h.tal = m[2].trim(); h.dist = m[3].trim(); }
+    ["vil","tal","dist"].forEach(function(k){ if(h[k]) h[k] = h[k].replace(/^.*[:：]\s*/, "").trim(); });
     if((m = /Marking\s*Code\s*[:;]?\s*([A-Za-z0-9][A-Za-z0-9\-\/]{4,})/i.exec(t))) h.mark = m[1];
     if((m = /Mobile\s*No\s*[:;]?\s*(\d{10})/i.exec(t))) h.mobile = m[1];
     if((m = /Survey\s*No\s*\/?\s*Gat\s*No\s*[:;]?\s*([0-9A-Za-z\/\-]+)/i.exec(t))) h.gat = m[1];
@@ -1069,7 +1076,7 @@ function makePdf(){
     var pdf = new window.jspdf.jsPDF({ unit:"mm", format:"a4", orientation:"portrait", compress:true }), sx = window.scrollX, sy = window.scrollY, chain = Promise.resolve();
     window.scrollTo(0, 0);
     src.forEach(function(pg, i){ chain = chain.then(function(){
-      stg.innerHTML = ""; var c = pg.cloneNode(true); c.style.transform = ""; c.querySelectorAll("[placeholder]").forEach(function(x){ x.removeAttribute("placeholder"); }); stg.appendChild(c);
+      stg.innerHTML = ""; var c = pg.cloneNode(true); c.style.transform = ""; flatten(pg, c); stg.appendChild(c);
       status("⏳ PDF बनवत आहे… पान " + (i + 1) + " / " + n);
       return new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); })
         .then(function(){ return window.html2canvas(c, { scale:1.7, backgroundColor:"#ffffff", logging:false, x:0, y:0, width:794, height:1123, windowWidth:794, windowHeight:1123, scrollX:0, scrollY:0 }); })
@@ -1080,6 +1087,19 @@ function makePdf(){
     status('✔ PDF तयार — <b>' + esc(PDFN) + '</b> (' + Math.round(PDFB.size / 1024) + ' KB) <button type="button" class="btn pri" id="bPdfGet" style="margin-left:6px">⬇ PDF उघडा / जतन करा</button>', "ok");
     $("bPdfGet").onclick = givePdf; $("st").scrollIntoView({ behavior:"smooth", block:"center" });
   }).catch(function(e){ PDFBUSY = false; status("❌ PDF बनवता आली नाही (" + esc(errText(e)) + "). Internet तपासा, किंवा <b>🖨 Print / PDF</b> वापरा (Print मध्ये \"Save as PDF\").", "err"); });
+}
+/* PDF साठी रकाने (input / select / textarea) साध्या अक्षरात — त्यामुळे अक्षरे कापली जात नाहीत, लांब मजकूर पुढच्या ओळीत जातो */
+function flatten(orig, c){
+  var Q = "input.f, select.f, textarea.f", O = orig.querySelectorAll(Q), C = c.querySelectorAll(Q);
+  [].forEach.call(C, function(el, i){
+    var o = O[i], sp = document.createElement("span"), inTd = !!el.closest("td") && !el.closest("td.lines"), v;
+    if(el.tagName === "SELECT") v = o.value || (o.options[0] ? o.options[0].text : "");
+    else v = o.value;
+    sp.className = "fv" + (inTd ? " td" : "") + (el.tagName === "TEXTAREA" ? " ta" : "") + (el.tagName === "SELECT" && !o.value ? " ph" : "") + (/\bleft\b/.test(el.className) ? " left" : "");
+    sp.textContent = v || "\u00a0";
+    if(!inTd) sp.style.minWidth = Math.max(30, o.offsetWidth) + "px";
+    el.parentNode.replaceChild(sp, el);
+  });
 }
 function givePdf(){
   if(!PDFB) return;
