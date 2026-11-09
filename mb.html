@@ -114,6 +114,10 @@
     .f::placeholder{color:transparent}
   }
   #doc{overflow:hidden}
+  .pdfstage{position:fixed;left:0;top:0;width:794px;height:1123px;overflow:hidden;z-index:-1;background:#fff;pointer-events:none}
+  .pdfstage .pg{margin:0 !important;box-shadow:none !important;transform:none !important}
+  .pdfstage .f{color:#000}
+  .pdfstage .f.diff{background:none}
   .pgw{margin:0 auto 14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.12)}
   .pgw .pg{transform-origin:0 0;margin:0;box-shadow:none}
   #zoomBtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;border-radius:30px;box-shadow:0 3px 12px rgba(0,0,0,.25);background:var(--g2);color:#fff;border-color:var(--g2);font-weight:600}
@@ -200,6 +204,7 @@
     <div class="row" style="margin-top:8px">
       <button type="button" class="btn pri" id="bSave">💾 जतन करा</button>
       <button type="button" class="btn pri" id="bPrint2">🖨 Print / PDF</button>
+      <button type="button" class="btn pri" id="bPdf">⬇ PDF डाउनलोड</button>
       <button type="button" class="btn" id="bMr">🔤 नावे मराठीत करा</button>
       <button type="button" class="btn" id="bCalc">🧮 अनुदान हिशोब पुन्हा करा</button>
     </div>
@@ -1047,6 +1052,42 @@ $("bOcrOk").onclick = function(){
   setTimeout(function(){ $("cInfo").scrollIntoView({ behavior:"smooth" }); }, 100);
 };
 
+/* ---------- ⬇ PDF डाउनलोड (html2canvas + jsPDF) ---------- */
+var PLIBS = ["https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
+var PDFB = null, PDFN = "", PDFBUSY = false;
+function pdfName(m){ return ("MB - " + (m.ben.name || "MB") + (m.src && m.src.no ? " - " + m.src.no : "")).replace(/[\/\\:*?"<>|]+/g, "-") + ".pdf"; }
+function makePdf(){
+  if(!M || PDFBUSY) return; PDFBUSY = true; save();
+  /* रकान्यांतील सध्याचे आकडे HTML मध्ये लिहा (प्रत काढताना हरवू नयेत) */
+  document.querySelectorAll("#doc input").forEach(function(x){ x.setAttribute("value", x.value); });
+  document.querySelectorAll("#doc textarea").forEach(function(x){ x.textContent = x.value; });
+  document.querySelectorAll("#doc select").forEach(function(x){ [].forEach.call(x.options, function(o){ if(o.selected) o.setAttribute("selected", ""); else o.removeAttribute("selected"); }); });
+  var src = [].slice.call(document.querySelectorAll("#doc .pg")), n = src.length, name = pdfName(M);
+  status("⏳ PDF बनवत आहे… (" + n + " पाने)");
+  PLIBS.reduce(function(p, u){ return p.then(function(){ return window.html2canvas && window.jspdf ? null : loadJs([u]); }); }, Promise.resolve()).then(function(){
+    var stg = document.createElement("div"); stg.className = "pdfstage"; document.body.appendChild(stg);
+    var pdf = new window.jspdf.jsPDF({ unit:"mm", format:"a4", orientation:"portrait", compress:true }), sx = window.scrollX, sy = window.scrollY, chain = Promise.resolve();
+    window.scrollTo(0, 0);
+    src.forEach(function(pg, i){ chain = chain.then(function(){
+      stg.innerHTML = ""; var c = pg.cloneNode(true); c.style.transform = ""; c.querySelectorAll("[placeholder]").forEach(function(x){ x.removeAttribute("placeholder"); }); stg.appendChild(c);
+      status("⏳ PDF बनवत आहे… पान " + (i + 1) + " / " + n);
+      return new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); })
+        .then(function(){ return window.html2canvas(c, { scale:1.7, backgroundColor:"#ffffff", logging:false, x:0, y:0, width:794, height:1123, windowWidth:794, windowHeight:1123, scrollX:0, scrollY:0 }); })
+        .then(function(cv){ if(i) pdf.addPage("a4", "portrait"); pdf.addImage(cv.toDataURL("image/jpeg", 0.85), "JPEG", 0, 0, 210, 297, undefined, "FAST"); }); }); });
+    return chain.then(function(){ PDFB = pdf.output("blob"); PDFN = name; }).then(function(){ stg.remove(); window.scrollTo(sx, sy); }, function(e){ stg.remove(); window.scrollTo(sx, sy); throw e; });
+  }).then(function(){
+    PDFBUSY = false;
+    status('✔ PDF तयार — <b>' + esc(PDFN) + '</b> (' + Math.round(PDFB.size / 1024) + ' KB) <button type="button" class="btn pri" id="bPdfGet" style="margin-left:6px">⬇ PDF उघडा / जतन करा</button>', "ok");
+    $("bPdfGet").onclick = givePdf; $("st").scrollIntoView({ behavior:"smooth", block:"center" });
+  }).catch(function(e){ PDFBUSY = false; status("❌ PDF बनवता आली नाही (" + esc(errText(e)) + "). Internet तपासा, किंवा <b>🖨 Print / PDF</b> वापरा (Print मध्ये \"Save as PDF\").", "err"); });
+}
+function givePdf(){
+  if(!PDFB) return;
+  var f = null; try{ f = new File([PDFB], PDFN, { type:"application/pdf" }); }catch(e){}
+  if(f && navigator.canShare && navigator.canShare({ files:[f] })){ navigator.share({ files:[f], title:PDFN }).catch(function(){}); return; }   /* iPhone / Android: Files / WhatsApp मध्ये */
+  var u = URL.createObjectURL(PDFB), a = document.createElement("a"); a.href = u; a.download = PDFN; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 60000);
+}
+
 /* ---------- जतन / यादी ---------- */
 function save(){
   if(!M) return; M.at = new Date().toISOString(); M.sign = off();
@@ -1056,6 +1097,7 @@ function save(){
 $("bSave").onclick = save;
 $("bCalc").onclick = function(){ if(M) calcAn(); };
 $("bMr").onclick = function(){ mrNames(true); };
+$("bPdf").onclick = makePdf;
 $("bMrUndo").onclick = mrUndo;
 /* A4 पान पूर्ण स्क्रीनमध्ये (फोनवर लहान करून) — "मोठे करा" ने खरी साईझ */
 var BIG = false;
@@ -1085,11 +1127,12 @@ $("gTpl").innerHTML += GTPL.map(function(t){ return '<option value="' + t[0] + '
 document.querySelectorAll(".pct [data-p]").forEach(function(b){ b.onclick = function(){ $("pctTop").value = b.getAttribute("data-p"); setPct(b.getAttribute("data-p")); }; });
 function renderList(){
   var q = $("q").value.trim().toLowerCase(), L = (LS("mb_list") || []).filter(function(x){ return !q || [x.ben.name, x.ben.vil, x.src && x.src.no].join(" ").toLowerCase().indexOf(q) >= 0; });
-  $("list").innerHTML = L.length ? L.map(function(x){ return '<div class="it"><div class="m"><b>' + esc(x.ben.name || "(नाव नाही)") + "</b><small>" + esc(x.ben.vil || "") + (x.src ? " · Invoice " + esc(x.src.no) + " · " + esc(x.src.coName) : " · हाताने") + " · " + esc(x.bab.type || "") + " " + esc(x.bab.area || "") + " चौ.मी. · जतन " + new Date(x.at).toLocaleDateString("en-IN") + '</small></div><button type="button" class="btn" data-o="' + esc(x.id) + '">उघडा</button><button type="button" class="btn" data-d="' + esc(x.id) + '" aria-label="काढा" style="color:#a3321c">🗑</button></div>'; }).join("") : '<p class="hint">अजून काही जतन केलेले नाही.</p>';
+  $("list").innerHTML = L.length ? L.map(function(x){ return '<div class="it"><div class="m"><b>' + esc(x.ben.name || "(नाव नाही)") + "</b><small>" + esc(x.ben.vil || "") + (x.src ? " · Invoice " + esc(x.src.no) + " · " + esc(x.src.coName) : " · हाताने") + " · " + esc(x.bab.type || "") + " " + esc(x.bab.area || "") + " चौ.मी. · जतन " + new Date(x.at).toLocaleDateString("en-IN") + '</small></div><button type="button" class="btn" data-o="' + esc(x.id) + '">उघडा</button><button type="button" class="btn pri" data-p="' + esc(x.id) + '">⬇ PDF</button><button type="button" class="btn" data-d="' + esc(x.id) + '" aria-label="काढा" style="color:#a3321c">🗑</button></div>'; }).join("") : '<p class="hint">अजून काही जतन केलेले नाही.</p>';
 }
 $("q").oninput = renderList;
 $("list").onclick = function(e){
-  var o = e.target.getAttribute("data-o"), d = e.target.getAttribute("data-d"), L = LS("mb_list") || [];
+  var o = e.target.getAttribute("data-o"), d = e.target.getAttribute("data-d"), pp = e.target.getAttribute("data-p"), L = LS("mb_list") || [];
+  if(pp){ var it = L.filter(function(x){ return x.id === pp; })[0]; if(!it) return; M = mig(it); $("cList").hidden = true; render(); fitPages(); window.scrollTo({ top:0 }); setTimeout(makePdf, 120); return; }
   if(o){ M = mig(L.filter(function(x){ return x.id === o; })[0]); $("cList").hidden = true; $("cLoad").hidden = false; render(); $("cInfo").scrollIntoView(); }
   if(d && confirm("हे MB या फोनमधून काढायचे?")){ LS("mb_list", L.filter(function(x){ return x.id !== d; })); renderList(); }
 };
